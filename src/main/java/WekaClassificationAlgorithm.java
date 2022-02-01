@@ -4,7 +4,6 @@ import weka.classifiers.evaluation.Evaluation;
 import weka.classifiers.evaluation.ConfusionMatrix;
 import weka.classifiers.lazy.IBk;
 import weka.classifiers.trees.J48;
-import weka.classifiers.trees.RandomForest;
 import weka.core.Instances;
 import weka.core.converters.ConverterUtils.DataSource;
 
@@ -35,7 +34,7 @@ public class WekaClassificationAlgorithm {
         //from train size to test size are test instances
         Instances testInstances = new Instances(instances, trainSize, testSize);
 
-
+        //kriterium - shannova entropia, klassification error, giny index, fuzzy rozhodovacia strom,
         Classifier classifier;
 
         //---------------------------KNN---------------------------
@@ -45,15 +44,25 @@ public class WekaClassificationAlgorithm {
         classifier = new NaiveBayes();
 
         // ---------------------------Decision trees J48---------------------------
-        classifier = new J48();
+        //classifier = new J48();
 
-        classifier = new KNN();
+        //classifier = new MyAlgorithm();
 
         classifier.buildClassifier(trainInstances);
 
 
+        //epoch for bigger data
+        //batch - zhluk dat
+        //filtracia dat
+        //normalizacia vstupnych dat preco sa to robi
+        //aby mal lepsiu formu ucenia algoritmus
+
         Evaluation evaluation = new Evaluation(testInstances);
         evaluation.evaluateModel(classifier, testInstances);
+        //toto si viem ulozit
+        // dovod ulozenia matice
+
+
 
 
         System.out.println(evaluation.toSummaryString());
