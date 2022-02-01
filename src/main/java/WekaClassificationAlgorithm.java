@@ -1,54 +1,41 @@
+import dataset.ArffManager;
+import dataset.DatasetManager;
+import instance.InstanceManager;
 import weka.classifiers.Classifier;
-import weka.classifiers.bayes.NaiveBayes;
 import weka.classifiers.evaluation.Evaluation;
 import weka.classifiers.evaluation.ConfusionMatrix;
 import weka.classifiers.lazy.IBk;
 import weka.classifiers.trees.J48;
 import weka.core.Instances;
-import weka.core.converters.ConverterUtils.DataSource;
-
-import java.util.Random;
 
 public class WekaClassificationAlgorithm {
 
     public static void main(String[] args) throws Exception {
-        String fileName = "src/main/resources/files/heart.arff";
-        DataSource source = new DataSource(fileName);
-        Instances instances = source.getDataSet();
-
-
-        System.out.println(instances.toSummaryString());
-
-        instances.setClassIndex(instances.numAttributes() - 1);
-
-        //randomize order of records in my input dataset
-        instances.randomize(new Random(23));
-
-        //how much data in dataset, e.g. 80 percent
-        int trainSize = (int) Math.round(instances.numInstances() * 0.80);
-        int testSize = instances.numInstances() - trainSize;
-
-        //from 0 to train size are train instances
-        Instances trainInstances = new Instances(instances, 0, trainSize);
-
-        //from train size to test size are test instances
-        Instances testInstances = new Instances(instances, trainSize, testSize);
-
         //kriterium - shannova entropia, klassification error, giny index, fuzzy rozhodovacia strom,
         Classifier classifier;
 
         //---------------------------KNN---------------------------
-        classifier = new IBk();
+        //classifier = new IBk();
 
         // ---------------------------NaiveBayes---------------------------
-        classifier = new NaiveBayes();
+        //classifier = new NaiveBayes();
 
         // ---------------------------Decision trees J48---------------------------
-        //classifier = new J48();
+        classifier = new J48();
 
         //classifier = new MyAlgorithm();
+        DatasetManager dataset = new DatasetManager(true);
+        String fileName = "testData";
 
-        classifier.buildClassifier(trainInstances);
+        InstanceManager manager = new InstanceManager(fileName);
+
+        Instances all = manager.getAll();
+        Instances test = manager.getTest();
+        Instances train = manager.getTrain();
+
+        //manager.getNewInstance();
+
+        classifier.buildClassifier(train);
 
 
         //epoch for bigger data
@@ -57,8 +44,8 @@ public class WekaClassificationAlgorithm {
         //normalizacia vstupnych dat preco sa to robi
         //aby mal lepsiu formu ucenia algoritmus
 
-        Evaluation evaluation = new Evaluation(testInstances);
-        evaluation.evaluateModel(classifier, testInstances);
+        Evaluation evaluation = new Evaluation(test);
+        evaluation.evaluateModel(classifier, test);
         //toto si viem ulozit
         // dovod ulozenia matice
 
@@ -76,8 +63,5 @@ public class WekaClassificationAlgorithm {
         System.out.println("Accuracy: " + evaluation.pctCorrect());
         System.out.println("Precision: " + evaluation.precision(1));
         System.out.println("Recall: " + evaluation.recall(1));
-
-
-
     }
 }

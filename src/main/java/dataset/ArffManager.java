@@ -1,3 +1,5 @@
+package dataset;
+
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -64,7 +66,7 @@ public class ArffManager {
 
         ArffSaver saver = new ArffSaver();
         saver.setInstances(processedInstances);
-        saver.setFile(new File("src/main/resources/files/heart.arff"));
+        saver.setFile(new File("src/main/resources/files/covid.arff"));
         saver.writeBatch();
     }
 
