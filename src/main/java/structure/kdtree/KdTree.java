@@ -5,10 +5,7 @@ import weka.core.Attribute;
 import weka.core.Instance;
 import weka.core.Instances;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 
 public class KdTree implements Tree {
     private KdTreeNode root = null;
@@ -71,11 +68,9 @@ public class KdTree implements Tree {
             }
         }
         System.out.println("End");
+        inOrderPrint();
     }
 
-    private void inOrder() {
-
-    }
 
     private int getLevel(KdTreeNode node) {
         int level = node.getLevel();
@@ -134,5 +129,23 @@ public class KdTree implements Tree {
             attr.add(instance.attribute(i));
         }
         return attr;
+    }
+
+
+    public void inOrderPrint() {
+        System.out.println("--------------------IN ORDER-------------------------");
+        Stack<KdTreeNode> stack = new Stack<>();
+        KdTreeNode node = root;
+        while (!stack.isEmpty() || node != null) {
+            if (node != null) {
+                stack.push(node);
+                node = node.getLeftSon();
+            } else {
+                node = stack.pop();
+                System.out.println(node.getInstance());
+                node = node.getRightSon();
+            }
+        }
+        System.out.println("--------------------IN ORDER-------------------------");
     }
 }
