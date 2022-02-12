@@ -15,7 +15,10 @@ public class WekaClassificationAlgorithm {
         Classifier classifier;
 
         //---------------------------KNN---------------------------
-        //classifier = new IBk();
+        /*classifier = new IBk();
+        String[] options = new String[1];
+        options[0] ="-I";
+        classifier.setOptions(options);*/
 
         // ---------------------------NaiveBayes---------------------------
         //classifier = new NaiveBayes();
@@ -24,8 +27,8 @@ public class WekaClassificationAlgorithm {
         classifier = new J48();
 
         //classifier = new MyAlgorithm();
-        DatasetManager dataset = new DatasetManager(true);
-        String fileName = "testData";
+        //DatasetManager dataset = new DatasetManager(true);
+        String fileName = "heart2";
 
         InstanceManager manager = new InstanceManager(fileName);
 
@@ -44,7 +47,7 @@ public class WekaClassificationAlgorithm {
         //normalizacia vstupnych dat preco sa to robi
         //aby mal lepsiu formu ucenia algoritmus
 
-        Evaluation evaluation = new Evaluation(test);
+       /* Evaluation evaluation = new Evaluation(test);
         evaluation.evaluateModel(classifier, test);
         //toto si viem ulozit
         // dovod ulozenia matice
@@ -62,6 +65,6 @@ public class WekaClassificationAlgorithm {
         System.out.println(confusionMatrix);
         System.out.println("Accuracy: " + evaluation.pctCorrect());
         System.out.println("Precision: " + evaluation.precision(1));
-        System.out.println("Recall: " + evaluation.recall(1));
+        System.out.println("Recall: " + evaluation.recall(1));*/
     }
 }
