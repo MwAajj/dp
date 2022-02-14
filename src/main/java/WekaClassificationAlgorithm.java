@@ -1,22 +1,26 @@
 import dataset.ArffManager;
 import dataset.DatasetManager;
+import evaluation.EvaluationManager;
 import instance.InstanceManager;
 import weka.classifiers.Classifier;
 import weka.classifiers.evaluation.Evaluation;
 import weka.classifiers.evaluation.ConfusionMatrix;
 import weka.classifiers.lazy.IBk;
 import weka.classifiers.trees.J48;
+import weka.core.DenseInstance;
+import weka.core.Instance;
 import weka.core.Instances;
 
 public class WekaClassificationAlgorithm {
 
     public static void main(String[] args) throws Exception {
         //kriterium - shannova entropia, klassification error, giny index, fuzzy rozhodovacia strom,
-        Classifier classifier;
+        IBk classifier;
+        int k = 3;
 
         //---------------------------KNN---------------------------
-        /*classifier = new IBk();
-        String[] options = new String[1];
+        classifier = new IBk(k);
+        /*String[] options = new String[1];
         options[0] ="-I";
         classifier.setOptions(options);*/
 
@@ -24,11 +28,11 @@ public class WekaClassificationAlgorithm {
         //classifier = new NaiveBayes();
 
         // ---------------------------Decision trees J48---------------------------
-        classifier = new J48();
+        //classifier = new J48();
 
         //classifier = new MyAlgorithm();
         //DatasetManager dataset = new DatasetManager(true);
-        String fileName = "heart2";
+        String fileName = "testData3";
 
         InstanceManager manager = new InstanceManager(fileName);
 
@@ -37,34 +41,34 @@ public class WekaClassificationAlgorithm {
         Instances train = manager.getTrain();
 
         //manager.getNewInstance();
-
+        train.setClassIndex(2);
         classifier.buildClassifier(train);
+        Instances baseInstances = new Instances("Test", manager.getALlAttributes(), 1);
+        baseInstances.setClassIndex(baseInstances.numAttributes() - 1);
 
+        double[] instanceValue = new double[3];
+        instanceValue[0] = 7;
+        instanceValue[1] = 2;
+        instanceValue[2] = 1;
+        Instance instance = new DenseInstance(1d, instanceValue);
+        baseInstances.add(instance);
+        double v = classifier.classifyInstance(baseInstances.firstInstance());
+        System.out.println(v);
+        System.out.println("-------------------------");
+
+        double[] doubles = classifier.distributionForInstance(baseInstances.firstInstance());
+        for (int i = 0; i < doubles.length; i++) {
+            System.out.println(doubles[i]);
+        }
+
+
+        EvaluationManager evaluation = new EvaluationManager(classifier, test);
 
         //epoch for bigger data
         //batch - zhluk dat
+
         //filtracia dat
         //normalizacia vstupnych dat preco sa to robi
         //aby mal lepsiu formu ucenia algoritmus
-
-       /* Evaluation evaluation = new Evaluation(test);
-        evaluation.evaluateModel(classifier, test);
-        //toto si viem ulozit
-        // dovod ulozenia matice
-
-
-
-
-        System.out.println(evaluation.toSummaryString());
-
-        //Validation via confusion matrix
-
-        ConfusionMatrix confusionMatrix = new ConfusionMatrix(new String[] {"Healthy", "Ill"});
-        confusionMatrix.addPredictions(evaluation.predictions());
-
-        System.out.println(confusionMatrix);
-        System.out.println("Accuracy: " + evaluation.pctCorrect());
-        System.out.println("Precision: " + evaluation.precision(1));
-        System.out.println("Recall: " + evaluation.recall(1));*/
     }
 }

@@ -18,7 +18,7 @@ public class InstanceManager {
     private int classIndex;
     private double percentage;
     private String fileName;
-    private static final String PATH =  "src/main/resources/files/";
+    private static final String PATH = "src/main/resources/files/";
     private static final String ARFF_SUFFIX = ".arff";
 
     public InstanceManager() {
@@ -45,13 +45,13 @@ public class InstanceManager {
     }
 
 
-    private void process()  {
+    private void process() {
         DataSource source;
         try {
             String help = PATH + fileName + ARFF_SUFFIX;
             source = new DataSource(help);
             all = source.getDataSet();
-        } catch (Exception e ) {
+        } catch (Exception e) {
             System.err.println("Exception on " + e);
             throw new RuntimeException();
         }
@@ -89,7 +89,7 @@ public class InstanceManager {
         return newInstances;
     }
 
-    private ArrayList<Attribute> getALlAttributes() {
+    public ArrayList<Attribute> getALlAttributes() {
         ArrayList<Attribute> attr = new ArrayList<>();
         for (int i = 0; i < all.numAttributes(); i++) {
             attr.add(all.firstInstance().attribute(i));

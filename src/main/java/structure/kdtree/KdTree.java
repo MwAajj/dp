@@ -3,6 +3,7 @@ package structure.kdtree;
 import structure.MathOperation;
 import structure.Tree;
 import weka.core.Attribute;
+import weka.core.DenseInstance;
 import weka.core.Instance;
 import weka.core.Instances;
 
@@ -38,7 +39,7 @@ public class KdTree implements Tree {
         root.setLevel(0);
         nodeQueue.add(root);
 
-        //@TODO somehow improve memory management for list
+        //TODO somehow improve memory management for list
 
         for (int i = 0; i < list.size(); i++) {
             node = nodeQueue.poll();
@@ -54,8 +55,6 @@ public class KdTree implements Tree {
                 list.add(leftInstances);
             if (rightInstances.size() > 0)
                 list.add(rightInstances);
-
-
             if (leftInstances.size() > 0) {
                 level = getLevel(node);
                 Instance leftInstance = getMedianInstance(leftInstances, level);
@@ -93,7 +92,6 @@ public class KdTree implements Tree {
         }
         boolean setMedium = false;
         for (Instance instance : nodeInstances) {
-
             if (compareInstances(instance, medianInstance) && !setMedium) {
                 setMedium = true;
                 continue;
@@ -118,25 +116,33 @@ public class KdTree implements Tree {
         return true;
     }
 
-    //ukladat si listy ktore mam prehladat
-    //zvysujem vlekost stromu ked hladam susedov imo nie ?
+    private Instances initInstances(int k) {
+        Instances instances = new Instances("Neighbours", getALlAttributes(root.getInstance()), k);
+        for (int i = 0; i < k; i++) {
+            Instance initInstance = new DenseInstance(1, new double[root.getInstance().numAttributes()]); //TODO  WEIGHT 1 ????
+            instances.add(initInstance);
+        }
+        instances.setClassIndex(root.getInstance().classIndex());
+        return instances;
+    }
+
     @Override
-    public void findKNearestNeighbours(Instance pInstance, int k) {
-        Instance[] arrInstance = new Instance[k];
+    public Instances findKNearestNeighbours(Instance pInstance, int k) {
+        Instances instances = initInstances(k);
         Stack<KdTreeNode> stack = new Stack<>();
         Stack<Son> visited = new Stack<>();
         KdTreeNode node = this.root;
         double[] distances = new double[k];
         Arrays.fill(distances, Integer.MAX_VALUE);
-        int level = -1;
-        double distance = -1;
+        int level;
+        double distance;
 
         while (!stack.isEmpty() || node != null) {
             if (node != null) {
                 stack.push(node);
                 level = node.getLevel();
                 distance = MathOperation.euclidDistance(pInstance, node.getInstance());
-                processDistance(arrInstance, node.getInstance(), distance, distances);
+                processDistance(instances, node.getInstance(), distance, distances);
                 if (pInstance.value(level) <= node.getInstance().value(level)) {
                     if (node.getLeftSon() != null) {
                         node = node.getLeftSon();
@@ -174,10 +180,11 @@ public class KdTree implements Tree {
             }
         }
         System.out.println("Neighbours of instance: [" + pInstance + "]");
-        for (Instance instance : arrInstance) {
+        for (Instance instance : instances) {
             System.out.println(instance);
         }
         System.out.println("--------------------------");
+        return instances;
     }
 
     private double getMaxDistance(double[] distances) {
@@ -188,7 +195,7 @@ public class KdTree implements Tree {
         return max;
     }
 
-    private boolean processDistance(Instance[] arrInstance, Instance instance, double distance, double[] distances) {
+    private void processDistance(Instances instances, Instance instance, double distance, double[] distances) {
         int index = -1;
         double max = Double.MIN_VALUE;
         for (int i = 0; i < distances.length; i++) {
@@ -199,10 +206,8 @@ public class KdTree implements Tree {
         }
         if (distance < max) { // better distance was founded
             distances[index] = distance;
-            arrInstance[index] = instance;
-            return true;
+            instances.set(index, instance);
         }
-        return false;
     }
 
     private double axisDistance(Instance pInstance, KdTreeNode node, Son visitedSon) {
