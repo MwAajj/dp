@@ -79,13 +79,14 @@ public class InstanceManager {
     }
 
 
-    public void getNewInstance(double[] data) {
+    public Instances getNewInstance(double[] data) {
         Instances newInstances = new Instances(
                 "Target",
                 getALlAttributes(),
                 2
         );
         newInstances.add(new DenseInstance(1d, data));
+        return newInstances;
     }
 
     private ArrayList<Attribute> getALlAttributes() {
@@ -94,5 +95,9 @@ public class InstanceManager {
             attr.add(all.firstInstance().attribute(i));
         }
         return attr;
+    }
+
+    public void printInstances() {
+        System.out.println(all.toString());
     }
 }
