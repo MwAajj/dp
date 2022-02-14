@@ -12,7 +12,7 @@ public class BallTree implements Tree {
     }
 
     @Override
-    public double classifyInstance(Instance instance, int k) {
-        return 0d;
+    public void findKNearestNeighbours(Instance instance, int k) {
     }
+
 }

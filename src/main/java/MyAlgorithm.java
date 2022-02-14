@@ -22,7 +22,7 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
     private Tree tree;
 
     public MyAlgorithm() {
-        k = 1;
+        k = 2;
     }
 
     public MyAlgorithm(int k) {
@@ -43,7 +43,8 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
     //vratit nieco ako index cielovej triedy
     @Override
     public double classifyInstance(Instance instance) throws Exception {
-       return tree.classifyInstance(instance, k);
+       tree.findKNearestNeighbours(instance, k);
+       return 0d;
     }
 
 

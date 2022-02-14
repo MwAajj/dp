@@ -5,5 +5,6 @@ import weka.core.Instances;
 
 public interface Tree {
     void buildTree(Instances data);
-    double classifyInstance(Instance instance, int k);
+    void findKNearestNeighbours(Instance instance, int k);
+
 }

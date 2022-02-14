@@ -1,5 +1,6 @@
 package structure.kdtree;
 
+import structure.MathOperation;
 import structure.Tree;
 import weka.core.Attribute;
 import weka.core.Instance;
@@ -10,6 +11,12 @@ import java.util.*;
 public class KdTree implements Tree {
     private KdTreeNode root = null;
     private int NODES_SIZE = 2;
+
+    private enum Son {
+        LEFT,
+        RIGHT
+    }
+
     //pick random attribute ???
     // urcis si pocet instancii v kazdom liste
 
@@ -103,7 +110,7 @@ public class KdTree implements Tree {
 
     private boolean compareInstances(Instance first, Instance second) {
         if (first.numAttributes() != second.numAttributes())
-            throw new RuntimeException("Incompatible size of instances");
+            throw new RuntimeException("Compare Instances: Incompatible size of instances");
         for (int i = 0; i < first.numAttributes(); i++) {
             if (first.value(i) != second.value(i))
                 return false;
@@ -112,10 +119,99 @@ public class KdTree implements Tree {
     }
 
     //ukladat si listy ktore mam prehladat
+    //zvysujem vlekost stromu ked hladam susedov imo nie ?
     @Override
-    public double classifyInstance(Instance instance, int k) {
-        return 0d;
+    public void findKNearestNeighbours(Instance pInstance, int k) {
+        Instance[] arrInstance = new Instance[k];
+        Stack<KdTreeNode> stack = new Stack<>();
+        Stack<Son> visited = new Stack<>();
+        KdTreeNode node = this.root;
+        double[] distances = new double[k];
+        Arrays.fill(distances, Integer.MAX_VALUE);
+        int level = -1;
+        double distance = -1;
+
+        while (!stack.isEmpty() || node != null) {
+            if (node != null) {
+                stack.push(node);
+                level = node.getLevel();
+                distance = MathOperation.euclidDistance(pInstance, node.getInstance());
+                processDistance(arrInstance, node.getInstance(), distance, distances);
+                if (pInstance.value(level) <= node.getInstance().value(level)) {
+                    if (node.getLeftSon() != null) {
+                        node = node.getLeftSon();
+                        visited.push(Son.LEFT);
+                    } else {
+                        node = null;
+                        visited.push(Son.LEFT);
+                    }
+                } else {
+                    if (node.getRightSon() != null) {
+                        node = node.getRightSon();
+                        visited.push(Son.RIGHT);
+                    } else {
+                        node = null;
+                        visited.push(Son.RIGHT);
+                    }
+                }
+            } else {
+                node = stack.pop();
+                Son visitedSon = visited.pop();
+                if (node.isLeaf() // prevent from looping
+                        || visitedSon == Son.LEFT && node.getRightSon() == null // prevent from crashing
+                        || visitedSon == Son.RIGHT && node.getLeftSon() == null // prevent from crashing
+                ) {
+                    node = null; // prevent from looping
+                    continue; // there is no hope for better point
+                }
+
+                distance = axisDistance(pInstance, node, visitedSon);
+                if (distance < getMaxDistance(distances)) { // there is a hope to find a better node
+                    node = visitedSon == Son.LEFT ? node.getRightSon() : node.getLeftSon(); //thanks to this I check every possible node 7,2,0
+                } else {
+                    node = null; // prevent from looping
+                }
+            }
+        }
+        System.out.println("Neighbours of instance: [" + pInstance + "]");
+        for (Instance instance : arrInstance) {
+            System.out.println(instance);
+        }
+        System.out.println("--------------------------");
     }
+
+    private double getMaxDistance(double[] distances) {
+        double max = Double.MIN_VALUE;
+        for (double distance : distances)
+            if (max < distance)
+                max = distance;
+        return max;
+    }
+
+    private boolean processDistance(Instance[] arrInstance, Instance instance, double distance, double[] distances) {
+        int index = -1;
+        double max = Double.MIN_VALUE;
+        for (int i = 0; i < distances.length; i++) {
+            if (max < distances[i]) {
+                max = distances[i];
+                index = i;
+            }
+        }
+        if (distance < max) { // better distance was founded
+            distances[index] = distance;
+            arrInstance[index] = instance;
+            return true;
+        }
+        return false;
+    }
+
+    private double axisDistance(Instance pInstance, KdTreeNode node, Son visitedSon) {
+        KdTreeNode son = visitedSon == Son.LEFT ? node.getRightSon() : node.getLeftSon();
+        int level = node.getLevel();
+        //for another axis 0 because we measure distance to section not to point
+        return pInstance.value(level) - son.getInstance().value(level);
+    }
+
 
     private Instance getMedianInstance(Instances data, int level) {
         Instances instances = new Instances(data);
