@@ -12,7 +12,8 @@ public class BallTree implements Tree {
     }
 
     @Override
-    public void findKNearestNeighbours(Instance instance, int k) {
+    public Instances findKNearestNeighbours(Instance instance, int k) {
+        return  null;
     }
 
 }
