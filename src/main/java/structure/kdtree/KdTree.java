@@ -39,9 +39,10 @@ public class KdTree implements Tree {
         root.setLevel(0);
         nodeQueue.add(root);
 
-        //TODO somehow improve memory management for list
-
         for (int i = 0; i < list.size(); i++) {
+            if (i > 0) {
+                list.set(i - 1, null);
+            }
             node = nodeQueue.poll();
             if (node == null) {
                 System.out.println("Black Magic");
