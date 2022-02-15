@@ -12,36 +12,37 @@ import java.util.*;
 public class KdTree implements Tree {
     private KdTreeNode root = null;
     private int NODES_SIZE = 2;
+    private int classIndex = -1;
 
     private enum Son {
         LEFT,
         RIGHT
     }
 
-    //pick random attribute ???
-    // urcis si pocet instancii v kazdom liste
-
-
-    //mediany hladam vzdy len pre tie instancie ktore su mensie
-    //ukladam si instanciu mediany nie median
-
+    //random atribut na zaklade rozptylu to rob
     @Override
     public void buildTree(Instances data) {
         root = new KdTreeNode(data.firstInstance());
+        try {
+            classIndex = data.classIndex();
+        } catch (Exception e) {
+            throw new RuntimeException("Instances doesn't have class index");
+        }
         Queue<KdTreeNode> nodeQueue = new LinkedList<>();
 
         KdTreeNode node;
         LinkedList<Instances> list = new LinkedList<>();
         list.add(data);
-        Instance instance = getMedianInstance(new Instances(data), 0);
+        Instance instance = MathOperation.getMedianInstance(new Instances(data), 0);
 
         root.setInstance(instance);
         root.setLevel(0);
         nodeQueue.add(root);
 
-        //TODO somehow improve memory management for list
-
         for (int i = 0; i < list.size(); i++) {
+            if (i > 0) {
+                list.set(i - 1, null);
+            }
             node = nodeQueue.poll();
             if (node == null) {
                 System.out.println("Black Magic");
@@ -57,7 +58,7 @@ public class KdTree implements Tree {
                 list.add(rightInstances);
             if (leftInstances.size() > 0) {
                 level = getLevel(node);
-                Instance leftInstance = getMedianInstance(leftInstances, level);
+                Instance leftInstance = MathOperation.getMedianInstance(leftInstances, level);
                 node.setLeftSon(new KdTreeNode(leftInstance));
                 node.getLeftSon().setLevel(level);
                 node.getLeftSon().setParent(node);
@@ -66,7 +67,7 @@ public class KdTree implements Tree {
 
             if (rightInstances.size() > 0) {
                 level = getLevel(node);
-                Instance rightInstance = getMedianInstance(rightInstances, level);
+                Instance rightInstance = MathOperation.getMedianInstance(rightInstances, level);
                 node.setRightSon(new KdTreeNode(rightInstance));
                 node.getRightSon().setLevel(level);
                 node.getRightSon().setParent(node);
@@ -77,10 +78,69 @@ public class KdTree implements Tree {
         inOrderPrint();
     }
 
+    @Override
+    public Instances findKNearestNeighbours(Instance pInstance, int k) {
+        Instances instances = initInstances(k);
+        Stack<KdTreeNode> stack = new Stack<>();
+        Stack<Son> visited = new Stack<>();
+        KdTreeNode node = this.root;
+        double[] distances = new double[k];
+        Arrays.fill(distances, Integer.MAX_VALUE);
+        int level;
+        double distance;
+
+        while (!stack.isEmpty() || node != null) {
+            if (node != null) {
+                stack.push(node);
+                level = node.getLevel();
+                distance = MathOperation.euclidDistance(classIndex, node.getInstance(), pInstance);
+                processDistance(instances, node.getInstance(), distance, distances);
+                if (pInstance.value(level) <= node.getInstance().value(level)) {
+                    if (node.getLeftSon() != null) {
+                        node = node.getLeftSon();
+                        visited.push(Son.LEFT);
+                    } else {
+                        node = null;
+                        visited.push(Son.LEFT);
+                    }
+                } else {
+                    if (node.getRightSon() != null) {
+                        node = node.getRightSon();
+                        visited.push(Son.RIGHT);
+                    } else {
+                        node = null;
+                        visited.push(Son.RIGHT);
+                    }
+                }
+            } else {
+                node = stack.pop();
+                Son visitedSon = visited.pop();
+                if (node.isLeaf() // prevent from looping
+                        || visitedSon == Son.LEFT && node.getRightSon() == null // prevent from crashing
+                        || visitedSon == Son.RIGHT && node.getLeftSon() == null // prevent from crashing
+                ) {
+                    node = null; // prevent from looping
+                    continue; // there is no hope for better point
+                }
+
+                distance = axisDistance(pInstance, node, visitedSon);
+                if (distance < MathOperation.getMaxDistance(distances)) { // there is a hope to find a better node
+                    node = visitedSon == Son.LEFT ? node.getRightSon() : node.getLeftSon(); //thanks to this I check every possible node 7,2,0
+                } else {
+                    node = null; // prevent from looping
+                }
+            }
+        }
+        printNeighbours(instances, pInstance, distances);
+        return instances;
+    }
+
 
     private int getLevel(KdTreeNode node) {
         int level = node.getLevel();
         level++;
+        if(level == classIndex) //don't organize tree by class index
+            level++;
         level %= root.getInstance().numAttributes();
         return level;
     }
@@ -92,7 +152,7 @@ public class KdTree implements Tree {
         }
         boolean setMedium = false;
         for (Instance instance : nodeInstances) {
-            if (compareInstances(instance, medianInstance) && !setMedium) {
+            if (compareInstances(instance, medianInstance) && !setMedium) { // median instance must be excluded
                 setMedium = true;
                 continue;
             }
@@ -126,75 +186,6 @@ public class KdTree implements Tree {
         return instances;
     }
 
-    @Override
-    public Instances findKNearestNeighbours(Instance pInstance, int k) {
-        Instances instances = initInstances(k);
-        Stack<KdTreeNode> stack = new Stack<>();
-        Stack<Son> visited = new Stack<>();
-        KdTreeNode node = this.root;
-        double[] distances = new double[k];
-        Arrays.fill(distances, Integer.MAX_VALUE);
-        int level;
-        double distance;
-
-        while (!stack.isEmpty() || node != null) {
-            if (node != null) {
-                stack.push(node);
-                level = node.getLevel();
-                distance = MathOperation.euclidDistance(pInstance, node.getInstance());
-                processDistance(instances, node.getInstance(), distance, distances);
-                if (pInstance.value(level) <= node.getInstance().value(level)) {
-                    if (node.getLeftSon() != null) {
-                        node = node.getLeftSon();
-                        visited.push(Son.LEFT);
-                    } else {
-                        node = null;
-                        visited.push(Son.LEFT);
-                    }
-                } else {
-                    if (node.getRightSon() != null) {
-                        node = node.getRightSon();
-                        visited.push(Son.RIGHT);
-                    } else {
-                        node = null;
-                        visited.push(Son.RIGHT);
-                    }
-                }
-            } else {
-                node = stack.pop();
-                Son visitedSon = visited.pop();
-                if (node.isLeaf() // prevent from looping
-                        || visitedSon == Son.LEFT && node.getRightSon() == null // prevent from crashing
-                        || visitedSon == Son.RIGHT && node.getLeftSon() == null // prevent from crashing
-                ) {
-                    node = null; // prevent from looping
-                    continue; // there is no hope for better point
-                }
-
-                distance = axisDistance(pInstance, node, visitedSon);
-                if (distance < getMaxDistance(distances)) { // there is a hope to find a better node
-                    node = visitedSon == Son.LEFT ? node.getRightSon() : node.getLeftSon(); //thanks to this I check every possible node 7,2,0
-                } else {
-                    node = null; // prevent from looping
-                }
-            }
-        }
-        System.out.println("Neighbours of instance: [" + pInstance + "]");
-        for (Instance instance : instances) {
-            System.out.println(instance);
-        }
-        System.out.println("--------------------------");
-        return instances;
-    }
-
-    private double getMaxDistance(double[] distances) {
-        double max = Double.MIN_VALUE;
-        for (double distance : distances)
-            if (max < distance)
-                max = distance;
-        return max;
-    }
-
     private void processDistance(Instances instances, Instance instance, double distance, double[] distances) {
         int index = -1;
         double max = Double.MIN_VALUE;
@@ -217,14 +208,8 @@ public class KdTree implements Tree {
         return pInstance.value(level) - son.getInstance().value(level);
     }
 
-
-    private Instance getMedianInstance(Instances data, int level) {
-        Instances instances = new Instances(data);
-        instances.sort(level);
-        return instances.get(instances.size() / 2);
-    }
-
-    private ArrayList<Attribute> getALlAttributes(Instance instance) {
+    @Override
+    public ArrayList<Attribute> getALlAttributes(Instance instance) {
         ArrayList<Attribute> attr = new ArrayList<>();
         for (int i = 0; i < instance.numAttributes(); i++) {
             attr.add(instance.attribute(i));
@@ -232,6 +217,16 @@ public class KdTree implements Tree {
         return attr;
     }
 
+    private void printNeighbours(Instances instances, Instance pInstance, double[] distance) {
+        System.out.println("Neighbours of instance: [" + pInstance + "]");
+        int index = 0;
+        for (Instance instance : instances) {
+            System.out.print(instance);
+            System.out.println(" \t with distance: " + distance[index]);
+            index++;
+        }
+        System.out.println("--------------------------");
+    }
 
     public void inOrderPrint() {
         System.out.println("--------------------IN ORDER-------------------------");

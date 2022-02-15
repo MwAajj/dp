@@ -20,9 +20,9 @@ public class WekaClassificationAlgorithm {
 
         //---------------------------KNN---------------------------
         classifier = new IBk(k);
-        /*String[] options = new String[1];
-        options[0] ="-I";
-        classifier.setOptions(options);*/
+        String[] options = {"-K", "5", "-I"};
+
+        classifier.setOptions(options);
 
         // ---------------------------NaiveBayes---------------------------
         //classifier = new NaiveBayes();
@@ -32,7 +32,7 @@ public class WekaClassificationAlgorithm {
 
         //classifier = new MyAlgorithm();
         //DatasetManager dataset = new DatasetManager(true);
-        String fileName = "testData3";
+        String fileName = "testData4Fuzzy";
 
         InstanceManager manager = new InstanceManager(fileName);
 

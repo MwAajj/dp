@@ -15,7 +15,7 @@ public class EvaluationManager {
         evaluation.evaluateModel(classifier, test);
         System.out.println(evaluation.toSummaryString());
 
-        ConfusionMatrix confusionMatrix = new ConfusionMatrix(new String[] {"Healthy", "Ill"});
+        ConfusionMatrix confusionMatrix = new ConfusionMatrix(new String[] {"Healthy", "Ill", "Dead"});
         confusionMatrix.addPredictions(evaluation.predictions());
 
         System.out.println(confusionMatrix);
