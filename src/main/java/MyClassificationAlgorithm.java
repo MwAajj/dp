@@ -8,7 +8,7 @@ public class MyClassificationAlgorithm {
 
     public static void main(String[] args) throws Exception {
 
-        String fileName = "testData3";
+        String fileName = "testData4Fuzzy";
 
         InstanceManager manager = new InstanceManager(fileName);
         Instances train = manager.getTrain();
@@ -16,9 +16,10 @@ public class MyClassificationAlgorithm {
         Instances all = manager.getAll();
         manager.printInstances();
 
-        MyAlgorithm classifier = new MyAlgorithm(3);
-        String[] options = new String[1];
+        MyAlgorithm classifier = new MyAlgorithm(5);
+        String[] options = new String[2];
         options[0] = "-K";
+        options[1] = "-F";
         classifier.setOptions(options);
 
         classifier.buildClassifier(all);
@@ -29,14 +30,15 @@ public class MyClassificationAlgorithm {
         baseInstances.setClassIndex(baseInstances.numAttributes() - 1);
 
         double[] instanceValue = new double[size];
-        instanceValue[0] = 7;
+        instanceValue[0] = 3;
         instanceValue[1] = 2;
         instanceValue[2] = 1;
         Instance instance = new DenseInstance(1d, instanceValue);
         baseInstances.add(instance);
         double v = classifier.classifyInstance(instance);
-        System.out.println(v);
-        System.out.println("----------------------");
+        System.out.println("\n\n--------------------------------------------");
+        System.out.println("Instance: " + instance + " belongs to class " + v);
+        System.out.println("--------------------------------------------\n\n");
 
         double[] doubles = classifier.distributionForInstance(baseInstances.firstInstance());
         for (int i = 0; i < doubles.length; i++) {

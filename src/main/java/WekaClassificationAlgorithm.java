@@ -20,7 +20,7 @@ public class WekaClassificationAlgorithm {
 
         //---------------------------KNN---------------------------
         classifier = new IBk(k);
-        String[] options = {"-K", "3", "-I"};
+        String[] options = {"-K", "5", "-I"};
 
         classifier.setOptions(options);
 
@@ -32,7 +32,7 @@ public class WekaClassificationAlgorithm {
 
         //classifier = new MyAlgorithm();
         //DatasetManager dataset = new DatasetManager(true);
-        String fileName = "testData3";
+        String fileName = "testData4Fuzzy";
 
         InstanceManager manager = new InstanceManager(fileName);
 

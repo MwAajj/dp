@@ -1,5 +1,6 @@
 import lombok.Getter;
 import lombok.Setter;
+import structure.MathOperation;
 import structure.Tree;
 import structure.balltree.BallTree;
 import structure.kdtree.KdTree;
@@ -7,9 +8,7 @@ import weka.classifiers.AbstractClassifier;
 import weka.classifiers.Classifier;
 import weka.core.*;
 
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @Getter
 @Setter
@@ -20,46 +19,30 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
     private boolean mk_noWeight = false;
     private boolean mk_harmonicWeight = false;
     private boolean mk_fuzzyWeight = false;
-
+    private int m_NumClasses = 0;
     private int k;
     private Tree tree;
-
-    public MyAlgorithm() {
-        k = 1;
-    }
 
     public MyAlgorithm(int k) {
         this.k = k;
     }
 
-
     @Override
-    public void buildClassifier(Instances data) throws Exception {
+    public void buildClassifier(Instances data) {
+        m_NumClasses = data.numClasses();
+        if (data.size() < k) {
+            System.err.println("K {" + k + "} is bigger then size of data{"
+                    + data.size() + "}. You have been warned!!!");
+        }
         if (mk_isBallTree)
-            tree = new BallTree();
+            tree = new KdTree();
         else if (mk_isKdTree)
             tree = new KdTree();
         tree.buildTree(data);
     }
 
-    private Map<Double, Integer> getOccurrences(Instances instances) {
-        Map<Double, Integer> occurrences = new HashMap<>();
-        for (Instance kNearestNeighbour : instances) {
-            try {
-                double val = kNearestNeighbour.classValue();
-                Integer count = occurrences.get(val);
-                occurrences.put(val, count != null ? count + 1 : 1);
-            } catch (Exception E) {
-                throw new Error("Data has no class attribute!");
-            }
-        }
-        return occurrences;
-    }
-
-    @Override
-    public double classifyInstance(Instance instance) throws Exception {
+    private double noWeight(Instance instance) {
         Instances instances = tree.findKNearestNeighbours(instance, k);
-
         Map<Double, Integer> occurrences = getOccurrences(instances);
         int max = Integer.MIN_VALUE;
         double endClass = 0d;
@@ -72,15 +55,69 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
         return endClass;
     }
 
+    //TODO (int)current.classValue()
+    private Map<Double, Integer> getOccurrences(Instances instances) {
+        Map<Double, Integer> occurrences = new HashMap<>();
+        for (Instance instance : instances) {
+            double val = -1d;
+            try {
+                val = instance.classValue();
+            } catch (Exception E) {
+                throw new Error("Data has no class attribute!");
+            }
+            Integer count = occurrences.get(val);
+            occurrences.put(val, count != null ? count + 1 : 1);
+        }
+        return occurrences;
+    }
+
+    private Set<Double> getClassValues(Instances instances) {
+        Set<Double> classes = new TreeSet<>();
+        for (Instance instance : instances)
+            classes.add(instance.classValue());
+        return classes;
+    }
+
+    private double mk_fuzzyWeight(Instance instance) {
+        Instances instances = tree.findKNearestNeighbours(instance, k);
+        Set<Double> classValues = getClassValues(instances);
+        double endClass = 0d, min = -1d;
+        Map<Double, Double> info = new HashMap<>();
+        for (Double value : classValues) {
+            double prob = MathOperation.fuzzyDistance(instances, instance, value, 2);
+            if (min < prob) {
+                min = prob;
+                endClass = value;
+            }
+            info.put(value, prob);
+        }
+        System.out.println("\n--------------------F-KNN------------");
+        System.out.println(info);
+        System.out.println("-------------------------------------");
+        return endClass;
+    }
+
+
+    @Override
+    public double classifyInstance(Instance instance) {
+        double endClass = 0d;
+        if (mk_noWeight) {
+            endClass = noWeight(instance);
+        }
+        if (mk_fuzzyWeight) {
+            endClass = mk_fuzzyWeight(instance);
+        }
+        return endClass;
+    }
+
     //celkovy prehlad
     @Override
-    public double[] distributionForInstance(Instance instance) throws Exception {
-        double[] result = new double[instance.numAttributes()];
-        Map<Double, Integer> occurrences = getOccurrences(tree.findKNearestNeighbours(instance, k));
-        int index = 0;
+    public double[] distributionForInstance(Instance instance) {
+        double[] result = new double[m_NumClasses];
+        Instances kNearestNeighbours = tree.findKNearestNeighbours(instance, k);
+        Map<Double, Integer> occurrences = getOccurrences(kNearestNeighbours);
         for (Map.Entry<Double, Integer> pair : occurrences.entrySet()) {
-            result[index] = pair.getValue() / (double) k;
-            index++;
+            result[(int)pair.getKey().doubleValue()] = pair.getValue() / (double) k;
         }
         return result;
     }
