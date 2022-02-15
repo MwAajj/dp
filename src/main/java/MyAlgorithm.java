@@ -19,7 +19,7 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
     private boolean mk_isBallTree = false;
     private boolean mk_noWeight = false;
     private boolean mk_harmonicWeight = false;
-    private int mk_distanceWeighting;
+    private boolean mk_fuzzyWeight = false;
 
     private int k;
     private Tree tree;
@@ -58,7 +58,9 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
 
     @Override
     public double classifyInstance(Instance instance) throws Exception {
-        Map<Double, Integer> occurrences = getOccurrences(tree.findKNearestNeighbours(instance, k));
+        Instances instances = tree.findKNearestNeighbours(instance, k);
+
+        Map<Double, Integer> occurrences = getOccurrences(instances);
         int max = Integer.MIN_VALUE;
         double endClass = 0d;
         for (Map.Entry<Double, Integer> pair : occurrences.entrySet()) {
@@ -100,8 +102,12 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
     public void setOptions(String[] options) throws Exception {
         mk_isKdTree = Utils.getFlag('K', options);
         mk_isBallTree = Utils.getFlag('B', options);
-        mk_noWeight = Utils.getFlag('N', options);
-        mk_harmonicWeight = Utils.getFlag('H', options);
+
+        if (Utils.getFlag('H', options))
+            mk_harmonicWeight = true;
+        else if (Utils.getFlag('F', options))
+            mk_fuzzyWeight = true;
+        else mk_noWeight = true;
     }
 
     @Override

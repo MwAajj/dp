@@ -4,7 +4,7 @@ import weka.core.DenseInstance;
 import weka.core.Instance;
 import weka.core.Instances;
 
-public class WekaKdTreeDataset {
+public class MyClassificationAlgorithm {
 
     public static void main(String[] args) throws Exception {
 

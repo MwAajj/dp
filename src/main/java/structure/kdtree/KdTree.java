@@ -12,22 +12,22 @@ import java.util.*;
 public class KdTree implements Tree {
     private KdTreeNode root = null;
     private int NODES_SIZE = 2;
+    private int classIndex = -1;
 
     private enum Son {
         LEFT,
         RIGHT
     }
-
-    //pick random attribute ???
-    // urcis si pocet instancii v kazdom liste
-
-
-    //mediany hladam vzdy len pre tie instancie ktore su mensie
-    //ukladam si instanciu mediany nie median
-
+    //TODO PRI BUILDOVANI STROMU BRAT DO UVAHY TEN CLASS INDEX ????
+    //random atribut na zaklade rozptylu to rob
     @Override
     public void buildTree(Instances data) {
         root = new KdTreeNode(data.firstInstance());
+        try {
+            classIndex = data.classIndex();
+        } catch (Exception e) {
+            throw new RuntimeException("Instances doesn't have class index");
+        }
         Queue<KdTreeNode> nodeQueue = new LinkedList<>();
 
         KdTreeNode node;
@@ -82,6 +82,8 @@ public class KdTree implements Tree {
     private int getLevel(KdTreeNode node) {
         int level = node.getLevel();
         level++;
+        if(level == classIndex)
+            level++;
         level %= root.getInstance().numAttributes();
         return level;
     }
@@ -93,7 +95,7 @@ public class KdTree implements Tree {
         }
         boolean setMedium = false;
         for (Instance instance : nodeInstances) {
-            if (compareInstances(instance, medianInstance) && !setMedium) {
+            if (compareInstances(instance, medianInstance) && !setMedium) { // median instance must be excluded
                 setMedium = true;
                 continue;
             }
@@ -142,7 +144,7 @@ public class KdTree implements Tree {
             if (node != null) {
                 stack.push(node);
                 level = node.getLevel();
-                distance = MathOperation.euclidDistance(pInstance, node.getInstance());
+                distance = MathOperation.euclidDistance(node.getInstance(), pInstance);
                 processDistance(instances, node.getInstance(), distance, distances);
                 if (pInstance.value(level) <= node.getInstance().value(level)) {
                     if (node.getLeftSon() != null) {
@@ -180,11 +182,7 @@ public class KdTree implements Tree {
                 }
             }
         }
-        System.out.println("Neighbours of instance: [" + pInstance + "]");
-        for (Instance instance : instances) {
-            System.out.println(instance);
-        }
-        System.out.println("--------------------------");
+        printNeighbours(instances, pInstance);
         return instances;
     }
 
@@ -233,6 +231,13 @@ public class KdTree implements Tree {
         return attr;
     }
 
+    private void printNeighbours(Instances instances, Instance pInstance) {
+        System.out.println("Neighbours of instance: [" + pInstance + "]");
+        for (Instance instance : instances) {
+            System.out.println(instance);
+        }
+        System.out.println("--------------------------");
+    }
 
     public void inOrderPrint() {
         System.out.println("--------------------IN ORDER-------------------------");

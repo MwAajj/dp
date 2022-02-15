@@ -20,9 +20,9 @@ public class WekaClassificationAlgorithm {
 
         //---------------------------KNN---------------------------
         classifier = new IBk(k);
-        /*String[] options = new String[1];
-        options[0] ="-I";
-        classifier.setOptions(options);*/
+        String[] options = {"-K", "3", "-I"};
+
+        classifier.setOptions(options);
 
         // ---------------------------NaiveBayes---------------------------
         //classifier = new NaiveBayes();
