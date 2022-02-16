@@ -16,10 +16,8 @@ public class MyClassificationAlgorithm {
         Instances all = manager.getAll();
         manager.printInstances();
 
-        MyAlgorithm classifier = new MyAlgorithm(5);
-        String[] options = new String[2];
-        options[0] = "-K";
-        options[1] = "-F";
+        MyAlgorithm classifier = new MyAlgorithm();
+        String[] options = {"-K", "5", "-H", "2"};
         classifier.setOptions(options);
 
         classifier.buildClassifier(all);
@@ -42,8 +40,9 @@ public class MyClassificationAlgorithm {
 
         double[] doubles = classifier.distributionForInstance(baseInstances.firstInstance());
         for (int i = 0; i < doubles.length; i++) {
-            System.out.println(doubles[i]);
+            System.out.println("Probability of class" + i +  " is " + doubles[i]);
         }
+        System.out.println("\n");
 
         EvaluationManager evaluationManager = new EvaluationManager(classifier, test);
     }

@@ -1,4 +1,5 @@
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import structure.MathOperation;
 import structure.Tree;
@@ -12,6 +13,7 @@ import java.util.*;
 
 @Getter
 @Setter
+@NoArgsConstructor
 public class MyAlgorithm extends AbstractClassifier implements Classifier, OptionHandler {
 
     private boolean mk_isKdTree = false;
@@ -21,11 +23,14 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
     private boolean mk_fuzzyWeight = false;
     private int m_NumClasses = 0;
     private int k;
+    private int m;
+    private int r;
     private Tree tree;
 
     public MyAlgorithm(int k) {
         this.k = k;
     }
+
 
     @Override
     public void buildClassifier(Instances data) {
@@ -55,11 +60,10 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
         return endClass;
     }
 
-    //TODO (int)current.classValue()
     private Map<Double, Integer> getOccurrences(Instances instances) {
         Map<Double, Integer> occurrences = new HashMap<>();
         for (Instance instance : instances) {
-            double val = -1d;
+            double val;
             try {
                 val = instance.classValue();
             } catch (Exception E) {
@@ -71,27 +75,67 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
         return occurrences;
     }
 
-    private Set<Double> getClassValues(Instances instances) {
-        Set<Double> classes = new TreeSet<>();
-        for (Instance instance : instances)
-            classes.add(instance.classValue());
-        return classes;
-    }
-
     private double mk_fuzzyWeight(Instance instance) {
         Instances instances = tree.findKNearestNeighbours(instance, k);
-        Set<Double> classValues = getClassValues(instances);
-        double endClass = 0d, min = -1d;
+        double endClass = 0d, max = -1d;
         Map<Double, Double> info = new HashMap<>();
-        for (Double value : classValues) {
-            double prob = MathOperation.fuzzyDistance(instances, instance, value, 2);
-            if (min < prob) {
-                min = prob;
-                endClass = value;
+        for (int i = 0; i < m_NumClasses; i++) {
+            double prob = MathOperation.fuzzyDistance(instances, instance, i, m);
+            if (max < prob) {
+                max = prob;
+                endClass = i;
             }
-            info.put(value, prob);
+            info.put((double) i, prob);
         }
         System.out.println("\n--------------------F-KNN------------");
+        System.out.println(info);
+        System.out.println("-------------------------------------");
+        return endClass;
+    }
+
+    private double mk_harmonicWeight(Instance instance) {
+        Instances instances = tree.findKNearestNeighbours(instance, k);
+        /*double[] meanDistances = new double[m_NumClasses];
+        Map<Double, Double> info = new HashMap<>();
+        double endClass = -1d;
+        double min = Double.MAX_VALUE;
+        for (int i = 0; i < m_NumClasses; i++) {
+            double prob = MathOperation.hmDistance(instances, instance, i, this.k);
+            if(min > prob) {
+                min = prob;
+                endClass = i;
+            }
+            info.put((double) i, prob);
+        }*/
+
+        double[] meanDistances = new double[m_NumClasses];
+        int index = 0;
+        for (int i = 0; i < m_NumClasses; i++) {
+            double prob = MathOperation.meanDistances(instances, instance, i, this.r);
+            meanDistances[index] = prob;
+            index++;
+        }
+        double[] harmonicMeanDistances = new double[m_NumClasses];
+        index = 0;
+        for (int i = 0; i < m_NumClasses; i++) {
+            double prob = MathOperation.harmonicDistance(instances, meanDistances, i, this.r);
+            harmonicMeanDistances[index] = prob;
+            index++;
+        }
+        double min = Double.MAX_VALUE;
+        double endClass = 0d;
+        index = 0;
+        Map<Double, Double> info = new HashMap<>();
+        for (int i = 0; i < m_NumClasses; i++) {
+            double prob = MathOperation.newHarmonicDistance(harmonicMeanDistances[i], this.k, m_NumClasses);
+            index++;
+            if(min > prob) {
+                min = prob;
+                endClass = i;
+            }
+            info.put((double) i, prob);
+        }
+        System.out.println("\n--------------------HMD-KNN------------");
         System.out.println(info);
         System.out.println("-------------------------------------");
         return endClass;
@@ -103,31 +147,25 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
         double endClass = 0d;
         if (mk_noWeight) {
             endClass = noWeight(instance);
-        }
-        if (mk_fuzzyWeight) {
+        } else if (mk_fuzzyWeight) {
             endClass = mk_fuzzyWeight(instance);
+        } else if (mk_harmonicWeight) {
+            endClass = mk_harmonicWeight(instance);
         }
         return endClass;
     }
 
-    //celkovy prehlad
+
     @Override
     public double[] distributionForInstance(Instance instance) {
         double[] result = new double[m_NumClasses];
         Instances kNearestNeighbours = tree.findKNearestNeighbours(instance, k);
         Map<Double, Integer> occurrences = getOccurrences(kNearestNeighbours);
         for (Map.Entry<Double, Integer> pair : occurrences.entrySet()) {
-            result[(int)pair.getKey().doubleValue()] = pair.getValue() / (double) k;
+            int index = (int) pair.getKey().doubleValue();
+            result[index] = pair.getValue() / (double) k;
         }
         return result;
-    }
-
-    //kedy je ten algoritmus pouzitelny,
-    // ked je to binarny klasifikator a su trie triedy exception
-    // numeralne hodnoty vs lingvisticke
-    @Override
-    public Capabilities getCapabilities() {
-        return null;
     }
 
     @Override
@@ -137,18 +175,63 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
 
     @Override
     public void setOptions(String[] options) throws Exception {
-        mk_isKdTree = Utils.getFlag('K', options);
-        mk_isBallTree = Utils.getFlag('B', options);
-
-        if (Utils.getFlag('H', options))
+        String knnString = Utils.getOption('K', options);
+        if (knnString.length() != 0) {
+            setK(Integer.parseInt(knnString));
+        }
+        if (Utils.getFlag('B', options))
+            mk_isBallTree = true;
+        else
+            mk_isKdTree = true;
+        String harmonicString = Utils.getOption('H', options);
+        String fuzzyString = Utils.getOption('F', options);
+        if (harmonicString.length() != 0) {
             mk_harmonicWeight = true;
-        else if (Utils.getFlag('F', options))
+            int r = Integer.parseInt(harmonicString);
+            if (r > k) {
+                System.err.println("For harmonic distance r {" + r + "} value shouldn't be bigger then k{" + k + "}");
+                setR(k);
+            } else setR(r);
+        } else if (fuzzyString.length() != 0) {
             mk_fuzzyWeight = true;
-        else mk_noWeight = true;
+            setM(Integer.parseInt(fuzzyString));
+        } else mk_noWeight = true;
     }
 
     @Override
     public String[] getOptions() {
-        return new String[0];
+        Vector<String> options = new Vector<>();
+        Collections.addAll(options, super.getOptions());
+        options.add("-K");
+        options.add("" + getK());
+        if (mk_fuzzyWeight) {
+            options.add("-F");
+        } else if (mk_harmonicWeight) {
+            options.add("-H");
+        }
+        return options.toArray(new String[0]);
+    }
+
+
+    @Override
+    public Capabilities getCapabilities() {
+        Capabilities result = super.getCapabilities();
+        result.disableAll();
+
+        // attributes
+        result.enable(Capabilities.Capability.NOMINAL_ATTRIBUTES);
+        result.enable(Capabilities.Capability.NUMERIC_ATTRIBUTES);
+        result.enable(Capabilities.Capability.DATE_ATTRIBUTES);
+        result.enable(Capabilities.Capability.MISSING_VALUES);
+
+        // class
+        result.enable(Capabilities.Capability.NOMINAL_CLASS);
+        result.enable(Capabilities.Capability.NUMERIC_CLASS);
+        result.enable(Capabilities.Capability.DATE_CLASS);
+        result.enable(Capabilities.Capability.MISSING_CLASS_VALUES);
+
+        // instances
+        result.setMinimumNumberInstances(0);
+        return result;
     }
 }
