@@ -11,25 +11,80 @@ public final class MathOperation {
         }
         double sum = 0;
         for (int i = 0; i < old.numAttributes(); i++) {
-            if(i == classIndex) continue; // don't calculate distance for class index
+            if (i == classIndex) continue; // don't calculate distance for class index
             sum += Math.pow((old.value(i) - newInstance.value(i)), 2d);
         }
         return Math.sqrt(sum);
     }
 
+    public static double euclidDistance(int classIndex, Instance old, double[] distances) {
+        if (old.numAttributes() != distances.length) {
+            throw new RuntimeException("CalculateDistance: Incompatible size of instances");
+        }
+        double sum = 0;
+        for (int i = 0; i < old.numAttributes(); i++) {
+            if (i == classIndex) continue; // don't calculate distance for class index
+            sum += Math.pow((old.value(i) - distances[i]), 2d);
+        }
+        return Math.sqrt(sum);
+    }
+
     //denominator -- down | numerator -- up
-    public static double fuzzyDistance(Instances instances,  Instance instance, double classValue,  int m) {
-        double numeratorSum = 0d, denominatorSum = 0d,  upperFraction = 0d;
+    public static double fuzzyDistance(Instances instances, Instance instance, double classValue, int m) {
+        double numeratorSum = 0d, denominatorSum = 0d, upperFraction;
         int numerator;
-        for (int i = 0; i < instances.size(); i++) {
-            numerator = instances.get(i).classValue() == classValue ? 1 : 0;
-            double distance = euclidDistance(instances.get(i).classIndex(), instances.get(i), instance);
+        for (Instance value : instances) {
+            numerator = value.classValue() == classValue ? 1 : 0;
+            double distance = euclidDistance(value.classIndex(), value, instance);
             double pow = Math.pow(distance, m);
             upperFraction = numerator / pow;
             numeratorSum += upperFraction;
-            denominatorSum += (1/ pow);
+            denominatorSum += (1 / pow);
         }
         return numeratorSum / denominatorSum;
+    }
+
+    //denominator -- down | numerator -- up
+    public static double hmDistance(Instances instances, Instance instance, double classValue, int k) {
+        double denominatorSum = 0d;
+        for (Instance value : instances) {
+            if(value.classValue() != classValue) continue;
+            double distance = euclidDistance(value.classIndex(), value, instance);
+            double pow = Math.pow(distance, 2);
+            denominatorSum += (1 / pow);
+        }
+        return k / denominatorSum;
+    }
+
+    public static double meanDistances(Instances instances, Instance instance, double classValue, int i) {
+        double sum = 0d, result;
+        for (Instance value : instances) {
+            if(value.classValue() != classValue) continue;
+            double distance = euclidDistance(value.classIndex(), value, instance);
+            sum += distance;
+        }
+        result = (1 / (double) i) * sum;
+        return result;
+    }
+
+    public static double harmonicDistance(Instances instances, double[] distances, double classValue, int r) {
+        double result, denominatorSum = 0d;
+        for (Instance value : instances) {
+            if(value.classValue() != classValue) continue;
+            double distance = euclidDistance(value.classIndex(), value, distances);
+            denominatorSum += (1 / distance);
+        }
+        result = r / denominatorSum;
+        return result;
+    }
+
+    public static double newHarmonicDistance(double distance, int k, int hm) { //harmonic mean size
+        double result, denominatorSum = 0d;
+        for (int i = 0; i < hm; i++) {
+            denominatorSum += 1/distance;
+        }
+        result = k / denominatorSum;
+        return result;
     }
 
     public static double getMaxDistance(double[] distances) {
