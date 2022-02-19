@@ -94,6 +94,8 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
     }
 
     private double mk_harmonicWeight(Instance instance) {
+        if(r > k)
+            throw new RuntimeException("r parameter must be smaller then k");
         Instances instances = tree.findKNearestNeighbours(instance, k);
         /*double[] meanDistances = new double[m_NumClasses];
         Map<Double, Double> info = new HashMap<>();
@@ -107,17 +109,16 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
             }
             info.put((double) i, prob);
         }*/
-
-        double[] meanDistances = new double[m_NumClasses];
+        double[] meanDistances = new double[k];
         int index = 0;
-        for (int i = 0; i < m_NumClasses; i++) {
+        for (int i = 0; i < k; i++) {
             double prob = MathOperation.meanDistances(instances, instance, i, this.r);
             meanDistances[index] = prob;
             index++;
         }
-        double[] harmonicMeanDistances = new double[m_NumClasses];
+        double[] harmonicMeanDistances = new double[k];
         index = 0;
-        for (int i = 0; i < m_NumClasses; i++) {
+        for (int i = 0; i < k; i++) {
             double prob = MathOperation.harmonicDistance(instances, meanDistances, i, this.r);
             harmonicMeanDistances[index] = prob;
             index++;
