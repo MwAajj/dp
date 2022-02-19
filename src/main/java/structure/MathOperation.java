@@ -17,12 +17,9 @@ public final class MathOperation {
         return Math.sqrt(sum);
     }
 
-    public static double euclidDistance(int classIndex, Instance old, double[] distances) {
-        if (old.numAttributes() != distances.length) {
-            throw new RuntimeException("CalculateDistance: Incompatible size of instances");
-        }
+    public static double euclidDistance(int classIndex, Instance old, double[] distances, int r) {
         double sum = 0;
-        for (int i = 0; i < old.numAttributes(); i++) {
+        for (int i = 0; i < distances.length; i++) {
             if (i == classIndex) continue; // don't calculate distance for class index
             sum += Math.pow((old.value(i) - distances[i]), 2d);
         }
@@ -71,7 +68,7 @@ public final class MathOperation {
         double result, denominatorSum = 0d;
         for (Instance value : instances) {
             if(value.classValue() != classValue) continue;
-            double distance = euclidDistance(value.classIndex(), value, distances);
+            double distance = euclidDistance(value.classIndex(), value, distances, r);
             denominatorSum += (1 / distance);
         }
         result = r / denominatorSum;

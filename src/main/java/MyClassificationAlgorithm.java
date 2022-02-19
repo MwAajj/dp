@@ -8,7 +8,7 @@ public class MyClassificationAlgorithm {
 
     public static void main(String[] args) throws Exception {
 
-        String fileName = "testData4Fuzzy";
+        String fileName = "testObraz";
 
         InstanceManager manager = new InstanceManager(fileName);
         Instances train = manager.getTrain();
@@ -17,7 +17,7 @@ public class MyClassificationAlgorithm {
         manager.printInstances();
 
         MyAlgorithm classifier = new MyAlgorithm();
-        String[] options = {"-K", "5", "-H", "2"};
+        String[] options = {"-K", "3", "-H", "3"};
         classifier.setOptions(options);
 
         classifier.buildClassifier(all);
@@ -28,7 +28,7 @@ public class MyClassificationAlgorithm {
         baseInstances.setClassIndex(baseInstances.numAttributes() - 1);
 
         double[] instanceValue = new double[size];
-        instanceValue[0] = 3;
+        instanceValue[0] = 5;
         instanceValue[1] = 2;
         instanceValue[2] = 1;
         Instance instance = new DenseInstance(1d, instanceValue);
@@ -43,7 +43,6 @@ public class MyClassificationAlgorithm {
             System.out.println("Probability of class" + i +  " is " + doubles[i]);
         }
         System.out.println("\n");
-
         EvaluationManager evaluationManager = new EvaluationManager(classifier, test);
     }
 }
