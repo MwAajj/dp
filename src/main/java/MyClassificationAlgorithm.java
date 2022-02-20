@@ -17,7 +17,7 @@ public class MyClassificationAlgorithm {
         manager.printInstances();
 
         MyAlgorithm classifier = new MyAlgorithm();
-        String[] options = {"-K", "3", "-H", "3"};
+        String[] options = {"-K", "3", "-F", "2"};
         classifier.setOptions(options);
 
         classifier.buildClassifier(all);
@@ -43,6 +43,6 @@ public class MyClassificationAlgorithm {
             System.out.println("Probability of class" + i +  " is " + doubles[i]);
         }
         System.out.println("\n");
-        EvaluationManager evaluationManager = new EvaluationManager(classifier, test);
+        EvaluationManager evaluationManager = new EvaluationManager(classifier, test, train);
     }
 }

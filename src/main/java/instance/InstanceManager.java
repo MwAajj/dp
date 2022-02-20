@@ -6,8 +6,7 @@ import weka.core.*;
 import weka.core.converters.ConverterUtils.DataSource;
 
 import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.Random;
+
 
 @Getter
 @AllArgsConstructor
@@ -37,10 +36,18 @@ public class InstanceManager {
 
     }
 
-    public InstanceManager(int classIndex, double percentage) {
+    public InstanceManager(String p_fileName, int classIndex) {
+        this.classIndex = classIndex;
+        fileName = p_fileName;
+        percentage = -1d;
+        process();
+    }
+
+
+    public InstanceManager(String p_fileName, int classIndex, double percentage) {
         this.classIndex = classIndex;
         this.percentage = percentage;
-        fileName = "heart";
+        fileName = p_fileName;
         process();
     }
 

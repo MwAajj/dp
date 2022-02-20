@@ -62,7 +62,7 @@ public class WekaClassificationAlgorithm {
         }
 
 
-        EvaluationManager evaluation = new EvaluationManager(classifier, test);
+        EvaluationManager evaluation = new EvaluationManager(classifier, test, train);
 
         //epoch for bigger data
         //batch - zhluk dat
