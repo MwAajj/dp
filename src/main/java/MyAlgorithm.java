@@ -3,7 +3,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import structure.MathOperation;
 import structure.Tree;
-import structure.balltree.BallTree;
 import structure.kdtree.KdTree;
 import weka.classifiers.AbstractClassifier;
 import weka.classifiers.Classifier;
@@ -34,23 +33,34 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
 
     @Override
     public void buildClassifier(Instances data) {
-        m_NumClasses = data.numClasses();
-        if (data.size() < k) {
-            System.err.println("K {" + k + "} is bigger then size of data{"
-                    + data.size() + "}. You have been warned!!!");
+        try {
+            getCapabilities().testWithFail(data);
+        } catch (Exception e) {
+            throw new RuntimeException("Test failed: " + e);
         }
-        if (mk_isBallTree)
-            tree = new KdTree();
-        else if (mk_isKdTree)
-            tree = new KdTree();
+        if (data.size() < k) {
+            throw new RuntimeException("K {" + k + "} is bigger then size of data{"
+                    + data.size() + "}");
+        }
+
+        m_NumClasses = data.numClasses();
+        tree = new KdTree();
         tree.buildTree(data);
     }
 
-    private double noWeight(Instance instance) {
+    public void help(Instance instance) {
+        Instances kNearestNeighbours = tree.findKNearestNeighbours(instance, k);
+        for (Instance instance1 : kNearestNeighbours) {
+            System.out.println(instance1);
+        }
+    }
+
+    public double noWeight(Instance instance) {
         Instances instances = tree.findKNearestNeighbours(instance, k);
         Map<Double, Integer> occurrences = getOccurrences(instances);
         int max = Integer.MIN_VALUE;
         double endClass = 0d;
+
         for (Map.Entry<Double, Integer> pair : occurrences.entrySet()) {
             if (max < pair.getValue()) {
                 max = pair.getValue();
@@ -94,7 +104,7 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
     }
 
     private double mk_harmonicWeight(Instance instance) {
-        if(r > k)
+        if (r > k)
             throw new RuntimeException("r parameter must be smaller then k");
         Instances instances = tree.findKNearestNeighbours(instance, k);
         /*double[] meanDistances = new double[m_NumClasses];
@@ -130,7 +140,7 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
         for (int i = 0; i < m_NumClasses; i++) {
             double prob = MathOperation.newHarmonicDistance(harmonicMeanDistances[i], this.k, m_NumClasses);
             index++;
-            if(min > prob) {
+            if (min > prob) {
                 min = prob;
                 endClass = i;
             }

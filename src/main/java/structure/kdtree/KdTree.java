@@ -7,9 +7,11 @@ import weka.core.DenseInstance;
 import weka.core.Instance;
 import weka.core.Instances;
 
+import java.io.Serializable;
 import java.util.*;
 
-public class KdTree implements Tree {
+public class KdTree implements Tree, Serializable{
+
     private KdTreeNode root = null;
     private int NODES_SIZE = 2;
     private int classIndex = -1;
@@ -36,7 +38,9 @@ public class KdTree implements Tree {
         Instance instance = MathOperation.getMedianInstance(new Instances(data), 0);
 
         root.setInstance(instance);
-        root.setLevel(0);
+        if(classIndex == 0)
+            root.setLevel(1);
+        else root.setLevel(0);
         nodeQueue.add(root);
 
         for (int i = 0; i < list.size(); i++) {
@@ -74,8 +78,9 @@ public class KdTree implements Tree {
                 nodeQueue.add(node.getRightSon());
             }
         }
-        System.out.println("End");
-        inOrderPrint();
+        int x = -1;
+        //System.out.println("End");
+        //inOrderPrint();
     }
 
     @Override
@@ -131,7 +136,7 @@ public class KdTree implements Tree {
                 }
             }
         }
-        printNeighbours(instances, pInstance, distances);
+        //printNeighbours(instances, pInstance, distances);
         return instances;
     }
 

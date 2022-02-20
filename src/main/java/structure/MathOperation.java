@@ -11,8 +11,11 @@ public final class MathOperation {
         }
         double sum = 0;
         for (int i = 0; i < old.numAttributes(); i++) {
+            double value = old.value(i);
+            double value1 = newInstance.value(i);
+            double x = value - value1;
             if (i == classIndex) continue; // don't calculate distance for class index
-            sum += Math.pow((old.value(i) - newInstance.value(i)), 2d);
+            sum += Math.pow(x, 2);
         }
         return Math.sqrt(sum);
     }
