@@ -6,21 +6,23 @@ import weka.classifiers.Classifier;
 import weka.classifiers.lazy.IBk;
 import weka.core.Instance;
 import weka.core.Instances;
+import weka.core.neighboursearch.BallTree;
 import weka.core.neighboursearch.KDTree;
 
 public class Source
 {
     public static void main(String[] args) throws Exception {
-        DatasetManager datasetManager  = new DatasetManager("covidFull", "covidFull", 0);
+        DatasetManager datasetManager  = new DatasetManager("VsetkoCovid", "VsetkoCovid");
+
+
+
         int k = 3;
         KDTree kdTree = new KDTree();
+        BallTree ballTree = new BallTree();
 
-        //IBk classifier = new IBk(3);
         //String[] options = {"-K", "3", "-F", "2"};
-        String[] options = {"-K", "10", "-H", "2"};
-        MyAlgorithm classifier = new MyAlgorithm();
-        classifier.setOptions(options);
-        InstanceManager manager = new InstanceManager("covidFull", 0);
+
+        InstanceManager manager = new InstanceManager("testData3", 2);
 
 
         Instances all = manager.getAll();
@@ -28,12 +30,21 @@ public class Source
         Instances train = manager.getTrain();
 
         kdTree.setInstances(all);
+        ballTree.setInstances(all);
+        //IBk classifier = new IBk(k);
+        MyAlgorithm classifier = new MyAlgorithm(3);
+        /*classifier.setNearestNeighbourSearchAlgorithm(kdTree);
+        classifier.setOptions(options);*/
+        classifier.buildClassifier(train);
+
+
 
         //System.out.println(all.firstInstance());
        // System.out.println(kdTree.nearestNeighbour(all.firstInstance()));
-        train.setClassIndex(train.numAttributes() - 1);
 
-        classifier.buildClassifier(train);
+        /*String[] options = {"-K", "3"};
+        //IBk classifier = new IBk(3);
+
         /*for(Instance instance : all) {
             System.out.println("----------------------------------------------------------------------------------------------");
             System.out.println(instance);

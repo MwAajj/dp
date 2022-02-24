@@ -17,11 +17,12 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
 
     private boolean mk_isKdTree = false;
     private boolean mk_isBallTree = false;
-    private boolean mk_noWeight = false;
-    private boolean mk_harmonicWeight = false;
-    private boolean mk_fuzzyWeight = false;
+    private boolean mk_knn = true;
+    private boolean mk_HmdKnn = false;
+    private boolean mk_FKnn = false;
     private int m_NumClasses = 0;
-    private int k;
+    private boolean mk_variance = false;
+    private int k = 1;
     private int m;
     private int r;
     private Tree tree;
@@ -30,21 +31,11 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
         this.k = k;
     }
 
-
     @Override
     public void buildClassifier(Instances data) {
-        try {
-            getCapabilities().testWithFail(data);
-        } catch (Exception e) {
-            throw new RuntimeException("Test failed: " + e);
-        }
-        if (data.size() < k) {
-            throw new RuntimeException("K {" + k + "} is bigger then size of data{"
-                    + data.size() + "}");
-        }
-
+        checkData(data);
         m_NumClasses = data.numClasses();
-        tree = new KdTree();
+        tree = new KdTree(mk_variance);
         tree.buildTree(data);
     }
 
@@ -85,12 +76,13 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
         return occurrences;
     }
 
-    private double mk_fuzzyWeight(Instance instance) {
+    private double fuzzyKNN(Instance instance) {
         Instances instances = tree.findKNearestNeighbours(instance, k);
+        double[] distances = tree.getDistances();
         double endClass = 0d, max = -1d;
         Map<Double, Double> info = new HashMap<>();
         for (int i = 0; i < m_NumClasses; i++) {
-            double prob = MathOperation.fuzzyDistance(instances, instance, i, m);
+            double prob = MathOperation.fuzzyDistance(instances, distances, i, m);
             if (max < prob) {
                 max = prob;
                 endClass = i;
@@ -103,43 +95,15 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
         return endClass;
     }
 
-    private double mk_harmonicWeight(Instance instance) {
+
+    private double hmdKNN(Instance instance) {
         if (r > k)
             throw new RuntimeException("r parameter must be smaller then k");
         Instances instances = tree.findKNearestNeighbours(instance, k);
-        /*double[] meanDistances = new double[m_NumClasses];
-        Map<Double, Double> info = new HashMap<>();
-        double endClass = -1d;
-        double min = Double.MAX_VALUE;
-        for (int i = 0; i < m_NumClasses; i++) {
-            double prob = MathOperation.hmDistance(instances, instance, i, this.k);
-            if(min > prob) {
-                min = prob;
-                endClass = i;
-            }
-            info.put((double) i, prob);
-        }*/
-        double[] meanDistances = new double[k];
-        int index = 0;
-        for (int i = 0; i < k; i++) {
-            double prob = MathOperation.meanDistances(instances, instance, i, this.r);
-            meanDistances[index] = prob;
-            index++;
-        }
-        double[] harmonicMeanDistances = new double[k];
-        index = 0;
-        for (int i = 0; i < k; i++) {
-            double prob = MathOperation.harmonicDistance(instances, meanDistances, i, this.r);
-            harmonicMeanDistances[index] = prob;
-            index++;
-        }
-        double min = Double.MAX_VALUE;
-        double endClass = 0d;
-        index = 0;
+        double min = Double.MAX_VALUE, endClass = 0d;
         Map<Double, Double> info = new HashMap<>();
         for (int i = 0; i < m_NumClasses; i++) {
-            double prob = MathOperation.newHarmonicDistance(harmonicMeanDistances[i], this.k, m_NumClasses);
-            index++;
+            double prob = MathOperation.newHarmonicDistance(instances, instance, k, r, m_NumClasses);
             if (min > prob) {
                 min = prob;
                 endClass = i;
@@ -152,29 +116,50 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
         return endClass;
     }
 
-
+    //return end class of new instance
     @Override
     public double classifyInstance(Instance instance) {
         double endClass = 0d;
-        if (mk_noWeight) {
+        if (mk_knn) {
             endClass = noWeight(instance);
-        } else if (mk_fuzzyWeight) {
-            endClass = mk_fuzzyWeight(instance);
-        } else if (mk_harmonicWeight) {
-            endClass = mk_harmonicWeight(instance);
+        } else if (mk_FKnn) {
+            endClass = fuzzyKNN(instance);
+        } else if (mk_HmdKnn) {
+            endClass = hmdKNN(instance);
         }
         return endClass;
     }
 
-
+    //return probabilities for each class of new instance
     @Override
     public double[] distributionForInstance(Instance instance) {
         double[] result = new double[m_NumClasses];
         Instances kNearestNeighbours = tree.findKNearestNeighbours(instance, k);
-        Map<Double, Integer> occurrences = getOccurrences(kNearestNeighbours);
-        for (Map.Entry<Double, Integer> pair : occurrences.entrySet()) {
-            int index = (int) pair.getKey().doubleValue();
-            result[index] = pair.getValue() / (double) k;
+        double[] distances = tree.getDistances();
+        if(mk_FKnn) {
+            for (int i = 0; i < m_NumClasses; i++) {
+                double prob = MathOperation.fuzzyDistance(kNearestNeighbours, distances, i, m);
+                result[i] = prob;
+            }
+            return result;
+        } else if (mk_HmdKnn) {
+            System.out.println("TODO");
+        } else {
+            double weight = 1, total = 0d;
+            for (int i = 0; i < kNearestNeighbours.numInstances(); i++) {
+                Instance current = kNearestNeighbours.instance(i);
+                if(mk_knn) {
+                    result[(int)current.classValue()] += 1;
+                }
+                else if (mk_FKnn) {
+                    result[(int)current.classValue()] += weight;
+                }
+                total += weight;
+            }
+            for (int i = 0; i < result.length; i++) {
+                result[i] = result[i] / total;
+            }
+
         }
         return result;
     }
@@ -197,16 +182,20 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
         String harmonicString = Utils.getOption('H', options);
         String fuzzyString = Utils.getOption('F', options);
         if (harmonicString.length() != 0) {
-            mk_harmonicWeight = true;
+            mk_HmdKnn = true;
+            mk_knn = false;
             int r = Integer.parseInt(harmonicString);
             if (r > k) {
                 System.err.println("For harmonic distance r {" + r + "} value shouldn't be bigger then k{" + k + "}");
                 setR(k);
             } else setR(r);
         } else if (fuzzyString.length() != 0) {
-            mk_fuzzyWeight = true;
+            mk_FKnn = true;
+            mk_knn = false;
             setM(Integer.parseInt(fuzzyString));
-        } else mk_noWeight = true;
+        }
+        if(Utils.getFlag('V', options))
+            mk_variance = true;
     }
 
     @Override
@@ -215,9 +204,9 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
         Collections.addAll(options, super.getOptions());
         options.add("-K");
         options.add("" + getK());
-        if (mk_fuzzyWeight) {
+        if (mk_FKnn) {
             options.add("-F");
-        } else if (mk_harmonicWeight) {
+        } else if (mk_HmdKnn) {
             options.add("-H");
         }
         return options.toArray(new String[0]);
@@ -244,5 +233,17 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
         // instances
         result.setMinimumNumberInstances(0);
         return result;
+    }
+
+    private void checkData(Instances data) {
+        try {
+            getCapabilities().testWithFail(data);
+        } catch (Exception e) {
+            throw new RuntimeException("Test failed: " + e);
+        }
+        if (data.size() < k) {
+            throw new RuntimeException("K {" + k + "} is bigger then size of data{"
+                    + data.size() + "}");
+        }
     }
 }

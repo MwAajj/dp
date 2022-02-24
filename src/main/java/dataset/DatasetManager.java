@@ -6,6 +6,7 @@ import weka.core.converters.ArffSaver;
 import weka.core.converters.CSVLoader;
 import weka.filters.Filter;
 import weka.filters.unsupervised.attribute.NumericToNominal;
+import weka.filters.unsupervised.attribute.ReplaceMissingValues;
 
 import java.io.File;
 
@@ -50,17 +51,20 @@ public class DatasetManager {
         NumericToNominal numericToNominal = new NumericToNominal();
         String s = String.valueOf(instances.numAttributes());
         numericToNominal.setAttributeIndices(s);
-
+        ReplaceMissingValues missing = new ReplaceMissingValues();
         Instances processedInstances;
         try {
-            numericToNominal.setInputFormat(instances);
+           numericToNominal.setInputFormat(instances);
             processedInstances = Filter.useFilter(instances, numericToNominal);
+            /*missing.setInputFormat(instances);
+            processedInstances = Filter.useFilter(instances, missing);*/
         } catch (Exception e) {
             System.out.println("Exception" + e);
             throw new RuntimeException(e);
         }
-
         saveAsArff(processedInstances);
+        //saveAsArff(instances);
+
     }
 
 
