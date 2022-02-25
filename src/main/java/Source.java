@@ -16,13 +16,13 @@ public class Source
 
 
 
-        int k = 3;
+        int k = 1;
         KDTree kdTree = new KDTree();
         BallTree ballTree = new BallTree();
 
         //String[] options = {"-K", "3", "-F", "2"};
 
-        InstanceManager manager = new InstanceManager("testData3", 2);
+        InstanceManager manager = new InstanceManager("testData5", 2);
 
 
         Instances all = manager.getAll();
@@ -32,10 +32,10 @@ public class Source
         kdTree.setInstances(all);
         ballTree.setInstances(all);
         //IBk classifier = new IBk(k);
-        MyAlgorithm classifier = new MyAlgorithm(3);
+        MyAlgorithm classifier = new MyAlgorithm(k);
         /*classifier.setNearestNeighbourSearchAlgorithm(kdTree);
         classifier.setOptions(options);*/
-        classifier.buildClassifier(train);
+        classifier.buildClassifier(all);
 
 
 

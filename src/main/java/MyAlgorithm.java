@@ -3,6 +3,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import structure.MathOperation;
 import structure.Tree;
+import structure.ballTree.BallTree;
 import structure.kdtree.KdTree;
 import weka.classifiers.AbstractClassifier;
 import weka.classifiers.Classifier;
@@ -35,7 +36,9 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
     public void buildClassifier(Instances data) {
         checkData(data);
         m_NumClasses = data.numClasses();
-        tree = new KdTree(mk_variance);
+        if (mk_isKdTree)
+            tree = new KdTree(mk_variance);
+        else tree = new BallTree(k);
         tree.buildTree(data);
     }
 

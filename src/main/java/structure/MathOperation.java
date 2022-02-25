@@ -5,6 +5,18 @@ import weka.core.Instances;
 
 public final class MathOperation {
 
+    public static double euclidDistance(Instance old, Instance newInstance) {
+        if (old.numAttributes() != newInstance.numAttributes()) {
+            throw new RuntimeException("CalculateDistance: Incompatible size of instances");
+        }
+        double sum = 0;
+        for (int i = 0; i < old.numAttributes(); i++) {
+            sum += Math.pow((old.value(i) - newInstance.value(i)), 2);
+        }
+        return Math.sqrt(sum);
+    }
+
+
     public static double euclidDistance(int classIndex, Instance old, Instance newInstance) {
         if (old.numAttributes() != newInstance.numAttributes()) {
             throw new RuntimeException("CalculateDistance: Incompatible size of instances");
