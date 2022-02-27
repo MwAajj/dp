@@ -1,21 +1,21 @@
 package structure.ballTree;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import structure.MathOperation;
 import structure.Tree;
-import structure.kdtree.KdTreeNode;
-import weka.core.Attribute;
-import weka.core.DenseInstance;
-import weka.core.Instance;
-import weka.core.Instances;
+import weka.core.*;
 import weka.core.neighboursearch.NearestNeighbourSearch;
 
 import java.util.*;
+import java.util.Queue;
 
 public class BallTree extends NearestNeighbourSearch implements Tree {
     private BallTreeNode root = null;
     private int classIndex = -1;
-    private int k;
-    private static final Random RANDOM = new Random();
+    private final int k;
+    PriorityQueue<DistInst> queue;
+    private static final Random RANDOM = new Random(0);
 
     public BallTree(int k) {
         this.k = k;
@@ -42,6 +42,11 @@ public class BallTree extends NearestNeighbourSearch implements Tree {
             Instances right = new Instances("right", getALlAttributes(data.firstInstance()), 0);
 
             node = nodeQueue.poll();
+            if (node == null) {
+                System.err.println("Node is null here");
+                return;
+            }
+
             if (!node.isInstances()) {
                 System.err.println("Instances are not set");
                 return;
@@ -57,7 +62,7 @@ public class BallTree extends NearestNeighbourSearch implements Tree {
             Arrays.sort(z, Comparator.comparingDouble(a -> a[0]));
             double m = z[z.length / 2][0];                      //7
 
-            if (isAllSame(z)) {
+            if (isAllSame(z)) { //special check preventing to cycle algorithm
                 for (int i = 0; i < z.length; i++) {
                     if (i < z.length / 2) left.add(data.get((int) z[i][1]));
                     else right.add(data.get((int) z[i][1]));
@@ -88,24 +93,161 @@ public class BallTree extends NearestNeighbourSearch implements Tree {
     }
 
     @Override
-    public Instances findKNearestNeighbours(Instance instance, int k) {
-        return null;
+    public Instances findKNearestNeighbours(Instance target, int k) {
+        BallTreeNode node = this.root;
+        queue = new PriorityQueue<>(k);
+        Stack<BallTreeNode> stack = new Stack<>();
+        Stack<Son> visited = new Stack<>();
+        Son visitedSon = null;
+        double left, right;
+        while (!stack.isEmpty() || node != null) {
+            if (node != null) {
+                stack.push(node);
+                double d1 = MathOperation.euclidDistance(classIndex, target, node.getCentroid());
+                double x = d1 - node.getRadius();
+                double d2;
+                if (queue.isEmpty()) d2 = Double.MAX_VALUE;
+                else d2 = MathOperation.euclidDistance(classIndex, target, queue.peek().getInstance());
+                if (x >= d2 && queue.size() == k) {
+                    return getInstancesQueue(target);
+                }
+                if (node.isLeaf()) {
+                    processLeaf(node, queue, target, k);
+                    node = null; //leaf was checked
+                    visited.push(Son.BOTH);
+                } else {
+                    if (node.getLeftSon() == null || visitedSon == Son.LEFT) {
+                        left = Double.MAX_VALUE;
+                    } else {
+                        left = MathOperation.euclidDistance(classIndex, target, node.getLeftSon().getCentroid());
+                    }
+                    if (node.getRightSon() == null || visitedSon == Son.RIGHT) {
+                        right = Double.MAX_VALUE;
+                    } else {
+                        right = MathOperation.euclidDistance(classIndex, target, node.getRightSon().getCentroid());
+                    }
+                    if (right == Double.MAX_VALUE && left == Double.MAX_VALUE)
+                        System.out.println("Unexpected Ball tree 123");
+                    if (left < right) {
+                        node = node.getLeftSon();
+                        if (visitedSon == Son.RIGHT)
+                            visited.push(Son.BOTH);
+                        else
+                            visited.push(Son.LEFT);
+                    } else {
+                        node = node.getRightSon();
+                        if (visitedSon == Son.LEFT)
+                            visited.push(Son.BOTH);
+                        else
+                            visited.push(Son.RIGHT);
+                    }
+                }
+            } else {
+                node = stack.pop();
+                visitedSon = visited.pop();
+                if (node.isLeaf()) {
+                    node = null; //prevent from looping
+                    continue;
+                }
+                if (visitedSon == Son.BOTH) {
+                    node = null; //you have no choice
+                }
+            }
+        }
+        return getInstancesQueue(target);
+    }
+
+    private Instances getInstancesQueue(Instance target) {
+        Instances instances = new Instances("neighbours", getALlAttributes(target), k);
+        for (DistInst distInst : queue) {
+            instances.add(distInst.getInstance());
+        }
+        return instances;
+    }
+
+    private void processLeaf(BallTreeNode node, PriorityQueue<DistInst> queue, Instance target, int k) {
+        double d3, d4;
+        if (node.getInstances().size() == 0)
+            System.out.println("Unexpected processLeaf");
+        for (int i = 0; i < node.getInstances().size(); i++) {
+            d3 = MathOperation.euclidDistance(classIndex, target, node.getInstances().get(i));
+            if (queue.isEmpty()) d4 = Double.MAX_VALUE;
+            else d4 = MathOperation.euclidDistance(classIndex, target, queue.peek().getInstance());
+            if (queue.size() <= k)
+                queue.add(new DistInst(node.getInstances().get(i), d3));
+            else if (d3 < d4) {
+                queue.add(new DistInst(node.getInstances().get(i), d3));
+            }
+            if (queue.size() > k)
+                queue.poll();
+        }
+    }
+
+
+    @AllArgsConstructor
+    @Getter
+    private static class DistInst implements Comparable<BallTree.DistInst> {
+        private Instance instance;
+        private double distance;
+
+        @Override
+        public int compareTo(DistInst o) {
+            return Double.compare(o.distance, this.distance);
+        }
     }
 
 
     @Override
-    public Instance nearestNeighbour(Instance target) throws Exception {
-        return null;
+    public Instance nearestNeighbour(Instance target) {
+        BallTreeNode node = this.root;
+        double left, right;
+        while (true) {
+            if (node.isLeaf()) {
+                double min = Double.MAX_VALUE;
+                Instance instance = null;
+                for (int i = 0; i < node.getInstances().size(); i++) {
+                    double distance = MathOperation.euclidDistance(classIndex, target, node.getInstances().get(i));
+                    if (min > distance) {
+                        min = distance;
+                        instance = node.getInstances().get(i);
+                    }
+                }
+                return instance;
+            }
+            if (node.getLeftSon() == null) {
+                left = Double.MAX_VALUE;
+            } else {
+                left = MathOperation.euclidDistance(classIndex, target, node.getLeftSon().getCentroid());
+            }
+            if (node.getRightSon() == null) {
+                right = Double.MAX_VALUE;
+            } else {
+                right = MathOperation.euclidDistance(classIndex, target, node.getRightSon().getCentroid());
+            }
+            if (right == Double.MAX_VALUE && left == Double.MAX_VALUE)
+                System.out.println("Unexpected Ball tree 1234");
+            if (left < right) {
+                node = node.getLeftSon();
+            } else {
+                node = node.getRightSon();
+            }
+        }
     }
 
     @Override
-    public Instances kNearestNeighbours(Instance target, int k) throws Exception {
-        return null;
+    public Instances kNearestNeighbours(Instance target, int k) {
+        return findKNearestNeighbours(target, k);
     }
 
     @Override
     public double[] getDistances() {
-        return new double[0];
+        double[] distances = new double[queue.size()];
+        int i = 0;
+        for (DistInst distInst : queue) {
+            distances[i] = distInst.getDistance();
+            i++;
+        }
+        return distances;
     }
 
     @Override
@@ -115,7 +257,7 @@ public class BallTree extends NearestNeighbourSearch implements Tree {
 
     @Override
     public String getRevision() {
-        return null;
+        return RevisionUtils.extract("$Revision: 1 $");
     }
 
     private boolean isAllSame(double[][] z) {
@@ -189,7 +331,7 @@ public class BallTree extends NearestNeighbourSearch implements Tree {
     private double getRadius(Instance centroid, Instances data) {
         double max = -Double.MIN_VALUE;
         for (Instance datum : data) {
-            double distance = MathOperation.euclidDistance(centroid, datum);
+            double distance = MathOperation.euclidDistance(classIndex, centroid, datum);
             if (distance > max) {
                 max = distance;
             }
@@ -217,9 +359,9 @@ public class BallTree extends NearestNeighbourSearch implements Tree {
 
     private Instance getCentroid(Instances data) {
         double[] values = new double[data.numAttributes()];
-        for (int i = 0; i < data.size(); i++) {
+        for (Instance datum : data) {
             for (int j = 0; j < values.length; j++) {
-                values[j] += data.get(i).value(j);
+                values[j] += datum.value(j);
             }
         }
         for (int i = 0; i < values.length; i++) {
@@ -234,7 +376,7 @@ public class BallTree extends NearestNeighbourSearch implements Tree {
         for (Instance inst : data) {
             if (inst == p_instance)
                 continue;
-            double distance = MathOperation.euclidDistance(inst, p_instance); //@TODO with or without class index
+            double distance = MathOperation.euclidDistance(classIndex, inst, p_instance);
             if (max < distance) {
                 instance = inst;
                 max = distance;
@@ -244,7 +386,7 @@ public class BallTree extends NearestNeighbourSearch implements Tree {
     }
 
     private int getRandomIndex(Instances data) {
-        int index = 0;
+        int index;
         index = RANDOM.nextInt(data.size());
         return index;
     }

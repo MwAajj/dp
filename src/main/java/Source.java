@@ -1,12 +1,12 @@
 import dataset.DatasetManager;
 import evaluation.EvaluationManager;
 import instance.InstanceManager;
+import structure.ballTree.BallTree;
 import structure.kdtree.KdTree;
 import weka.classifiers.Classifier;
 import weka.classifiers.lazy.IBk;
 import weka.core.Instance;
 import weka.core.Instances;
-import weka.core.neighboursearch.BallTree;
 import weka.core.neighboursearch.KDTree;
 
 public class Source
@@ -16,20 +16,24 @@ public class Source
 
 
 
-        int k = 1;
-        KDTree kdTree = new KDTree();
-        BallTree ballTree = new BallTree();
+        int k = 2;
+        KdTree kdTree = new KdTree(false);
+        BallTree ballTree = new BallTree(2);
 
         //String[] options = {"-K", "3", "-F", "2"};
 
-        InstanceManager manager = new InstanceManager("testData5", 2);
+        InstanceManager manager = new InstanceManager("testData3", 2);
 
 
         Instances all = manager.getAll();
         Instances test = manager.getTest();
         Instances train = manager.getTrain();
+        ballTree.buildTree(all);
+        ballTree.findKNearestNeighbours(all.firstInstance(), 4);
 
-        kdTree.setInstances(all);
+       /*kdTree.buildTree(all);
+        kdTree.findKNearestNeighbours(all.firstInstance(), 4);*/
+
         ballTree.setInstances(all);
         //IBk classifier = new IBk(k);
         MyAlgorithm classifier = new MyAlgorithm(k);
@@ -69,6 +73,6 @@ public class Source
 
 
 
-        EvaluationManager evaluation = new EvaluationManager(classifier, test, all);
+        //EvaluationManager evaluation = new EvaluationManager(classifier, test, all);
     }
 }

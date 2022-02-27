@@ -17,10 +17,6 @@ public class KdTree extends NearestNeighbourSearch implements Tree {
     private int classIndex = -1;
     int[] indices;
     double[] distances;
-    private enum Son {
-        LEFT,
-        RIGHT
-    }
 
     public KdTree(boolean variance) {
         this.variance = variance;
