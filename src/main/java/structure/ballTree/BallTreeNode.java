@@ -5,9 +5,11 @@ import lombok.Setter;
 import weka.core.Instance;
 import weka.core.Instances;
 
+import java.io.Serializable;
+
 @Getter
 @Setter
-public class BallTreeNode {
+public class BallTreeNode implements Serializable {
     private Instances instances;
     private BallTreeNode rightSon;
     private BallTreeNode leftSon;
