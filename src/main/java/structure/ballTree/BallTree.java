@@ -7,12 +7,14 @@ import structure.Tree;
 import weka.core.*;
 import weka.core.neighboursearch.NearestNeighbourSearch;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.Queue;
 
 public class BallTree extends NearestNeighbourSearch implements Tree {
     private BallTreeNode root = null;
     private int classIndex = -1;
+    private int numInst = -1;
     private final int k;
     PriorityQueue<DistInst> queue;
     private static final Random RANDOM = new Random(0);
@@ -23,7 +25,7 @@ public class BallTree extends NearestNeighbourSearch implements Tree {
 
     @Override
     public void buildTree(Instances data) {
-
+        numInst = data.size();
         Queue<BallTreeNode> nodeQueue = new LinkedList<>();
         classIndex = data.classIndex();
         Instance centroid1 = getCentroid(data);
@@ -88,17 +90,18 @@ public class BallTree extends NearestNeighbourSearch implements Tree {
             node.clearInstances();
         }
         //inOrderPrint();
-        levelOrderPrint();
-        System.out.println();
+        //levelOrderPrint();
+        //System.out.println();
     }
 
     @Override
     public Instances findKNearestNeighbours(Instance target, int k) {
+        checkData(k);
         BallTreeNode node = this.root;
+        Son visitedSon = null;
         queue = new PriorityQueue<>(k);
         Stack<BallTreeNode> stack = new Stack<>();
-        Stack<Son> visited = new Stack<>();
-        Son visitedSon = null;
+        Stack<Son> visited  = new Stack<>();
         double left, right;
         while (!stack.isEmpty() || node != null) {
             if (node != null) {
@@ -115,6 +118,7 @@ public class BallTree extends NearestNeighbourSearch implements Tree {
                     processLeaf(node, queue, target, k);
                     node = null; //leaf was checked
                     visited.push(Son.BOTH);
+                    visitedSon = Son.NONE;
                 } else {
                     if (node.getLeftSon() == null || visitedSon == Son.LEFT) {
                         left = Double.MAX_VALUE;
@@ -126,20 +130,26 @@ public class BallTree extends NearestNeighbourSearch implements Tree {
                     } else {
                         right = MathOperation.euclidDistance(classIndex, target, node.getRightSon().getCentroid());
                     }
-                    if (right == Double.MAX_VALUE && left == Double.MAX_VALUE)
-                        System.out.println("Unexpected Ball tree 123");
                     if (left < right) {
                         node = node.getLeftSon();
-                        if (visitedSon == Son.RIGHT)
+                        if (visitedSon == Son.RIGHT) {
                             visited.push(Son.BOTH);
-                        else
+                            visitedSon = Son.NONE;
+                        }
+                        else {
                             visited.push(Son.LEFT);
+                            visitedSon = Son.NONE;
+                        }
                     } else {
                         node = node.getRightSon();
-                        if (visitedSon == Son.LEFT)
+                        if (visitedSon == Son.LEFT) {
                             visited.push(Son.BOTH);
-                        else
+                            visitedSon = Son.NONE;
+                        }
+                        else {
                             visited.push(Son.RIGHT);
+                            visitedSon = Son.NONE;
+                        }
                     }
                 }
             } else {
@@ -149,12 +159,32 @@ public class BallTree extends NearestNeighbourSearch implements Tree {
                     node = null; //prevent from looping
                     continue;
                 }
-                if (visitedSon == Son.BOTH) {
-                    node = null; //you have no choice
-                }
+                if(isAllVisited(node, visitedSon))
+                    node = null;
             }
         }
         return getInstancesQueue(target);
+    }
+
+    private boolean isAllVisited(BallTreeNode node, Son son) {
+        if (node.getLeftSon() != null && node.getRightSon() != null) {
+            if (son == Son.BOTH)
+                return true;
+        }
+        if (node.getLeftSon() != null && node.getRightSon() == null) {
+            if (son == Son.LEFT)
+                return true;
+        }
+        if (node.getLeftSon() == null && node.getRightSon() != null) {
+            if (son == Son.RIGHT)
+                return true;
+        }
+        return false;
+    }
+
+    private void checkData(int k) {
+        if (numInst < k)
+            throw new RuntimeException("K is bigger than data");
     }
 
     private Instances getInstancesQueue(Instance target) {
@@ -162,6 +192,7 @@ public class BallTree extends NearestNeighbourSearch implements Tree {
         for (DistInst distInst : queue) {
             instances.add(distInst.getInstance());
         }
+        instances.setClassIndex(classIndex);
         return instances;
     }
 
@@ -173,7 +204,7 @@ public class BallTree extends NearestNeighbourSearch implements Tree {
             d3 = MathOperation.euclidDistance(classIndex, target, node.getInstances().get(i));
             if (queue.isEmpty()) d4 = Double.MAX_VALUE;
             else d4 = MathOperation.euclidDistance(classIndex, target, queue.peek().getInstance());
-            if (queue.size() <= k)
+            if (queue.size() < k)
                 queue.add(new DistInst(node.getInstances().get(i), d3));
             else if (d3 < d4) {
                 queue.add(new DistInst(node.getInstances().get(i), d3));
@@ -186,7 +217,7 @@ public class BallTree extends NearestNeighbourSearch implements Tree {
 
     @AllArgsConstructor
     @Getter
-    private static class DistInst implements Comparable<BallTree.DistInst> {
+    private static class DistInst implements Comparable<BallTree.DistInst>, Serializable {
         private Instance instance;
         private double distance;
 
@@ -195,7 +226,6 @@ public class BallTree extends NearestNeighbourSearch implements Tree {
             return Double.compare(o.distance, this.distance);
         }
     }
-
 
     @Override
     public Instance nearestNeighbour(Instance target) {
@@ -252,12 +282,13 @@ public class BallTree extends NearestNeighbourSearch implements Tree {
 
     @Override
     public void update(Instance ins) throws Exception {
+        numInst++;
 
     }
 
     @Override
     public String getRevision() {
-        return RevisionUtils.extract("$Revision: 1 $");
+        return RevisionUtils.extract("$Revision: 2 $");
     }
 
     private boolean isAllSame(double[][] z) {
