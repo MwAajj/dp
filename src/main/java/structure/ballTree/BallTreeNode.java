@@ -28,6 +28,10 @@ public class BallTreeNode implements Serializable {
         return instances != null;
     }
 
+    public void addInstance(Instance instance){
+        instances.add(instance);
+    }
+
     public boolean isLeaf() {
         return leftSon == null && rightSon == null;
     }

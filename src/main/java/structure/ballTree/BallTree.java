@@ -36,45 +36,13 @@ public class BallTree extends NearestNeighbourSearch implements Tree {
         nodeQueue.add(node);
 
         while (!nodeQueue.isEmpty()) {
-            if (node == null) {
-                System.err.println("Node is null");
-                return;
-            }
-            Instances left = new Instances("left", getALlAttributes(data.firstInstance()), 0);
-            Instances right = new Instances("right", getALlAttributes(data.firstInstance()), 0);
-
             node = nodeQueue.poll();
-            if (node == null) {
-                System.err.println("Node is null here");
-                return;
-            }
-
-            if (!node.isInstances()) {
-                System.err.println("Instances are not set");
-                return;
-            }
+            checkNode(node);
             data = node.getInstances();
 
-
-            int randomIndex = getRandomIndex(data);
-            Instance x0 = data.instance(randomIndex);           //3
-            Instance x1 = getFarthestDistance(data, x0);        //4
-            Instance x2 = getFarthestDistance(data, x1);        //5
-            double[][] z = processProjection(x1, x2, data);     //6
-            Arrays.sort(z, Comparator.comparingDouble(a -> a[0]));
-            double m = z[z.length / 2][0];                      //7
-
-            if (isAllSame(z)) { //special check preventing to cycle algorithm
-                for (int i = 0; i < z.length; i++) {
-                    if (i < z.length / 2) left.add(data.get((int) z[i][1]));
-                    else right.add(data.get((int) z[i][1]));
-                }
-            } else {
-                for (double[] pair : z) {
-                    if (pair[0] < m) left.add(data.get((int) pair[1])); //8
-                    else right.add(data.get((int) pair[1]));            //9
-                }
-            }
+            Instances left = new Instances("left", getALlAttributes(data.firstInstance()), 0);
+            Instances right = new Instances("right", getALlAttributes(data.firstInstance()), 0);
+            splitInstances(left, right, data);
             if (left.size() > 0) {
                 BallTreeNode leftNode = returnNode(left);
                 node.setLeftSon(leftNode);
@@ -89,9 +57,16 @@ public class BallTree extends NearestNeighbourSearch implements Tree {
             }
             node.clearInstances();
         }
-        //inOrderPrint();
-        //levelOrderPrint();
-        //System.out.println();
+    }
+
+    private void checkNode(BallTreeNode node) {
+        if (node == null) {
+            throw new RuntimeException("Node is null here");
+        }
+
+        if (!node.isInstances()) {
+            throw new RuntimeException("Instances are not set");
+        }
     }
 
     @Override
@@ -101,66 +76,48 @@ public class BallTree extends NearestNeighbourSearch implements Tree {
         Son visitedSon = null;
         queue = new PriorityQueue<>(k);
         Stack<BallTreeNode> stack = new Stack<>();
-        Stack<Son> visited  = new Stack<>();
-        double left, right;
+        Stack<Son> visited = new Stack<>();
+        double left, right, d1, d2;
         while (!stack.isEmpty() || node != null) {
             if (node != null) {
                 stack.push(node);
-                double d1 = MathOperation.euclidDistance(classIndex, target, node.getCentroid());
-                double x = d1 - node.getRadius();
-                double d2;
-                if (queue.isEmpty()) d2 = Double.MAX_VALUE;
-                else d2 = MathOperation.euclidDistance(classIndex, target, queue.peek().getInstance());
-                if (x >= d2 && queue.size() == k) {
+                d1 = MathOperation.euclidDistance(classIndex, target, node.getCentroid()) - node.getRadius();
+                d2 = queue.isEmpty() ? Double.MAX_VALUE
+                        : MathOperation.euclidDistance(classIndex, target, queue.peek().getInstance());
+                if (d1 >= d2 && queue.size() == k) {
                     return getInstancesQueue(target);
                 }
                 if (node.isLeaf()) {
                     processLeaf(node, queue, target, k);
                     node = null; //leaf was checked
                     visited.push(Son.BOTH);
-                    visitedSon = Son.NONE;
                 } else {
-                    if (node.getLeftSon() == null || visitedSon == Son.LEFT) {
-                        left = Double.MAX_VALUE;
-                    } else {
-                        left = MathOperation.euclidDistance(classIndex, target, node.getLeftSon().getCentroid());
-                    }
-                    if (node.getRightSon() == null || visitedSon == Son.RIGHT) {
-                        right = Double.MAX_VALUE;
-                    } else {
-                        right = MathOperation.euclidDistance(classIndex, target, node.getRightSon().getCentroid());
-                    }
+                    left = node.getLeftSon() == null || visitedSon == Son.LEFT ? Double.MAX_VALUE
+                            : MathOperation.euclidDistance(classIndex, target, node.getLeftSon().getCentroid());
+                    right = node.getRightSon() == null || visitedSon == Son.RIGHT ? Double.MAX_VALUE
+                            : MathOperation.euclidDistance(classIndex, target, node.getRightSon().getCentroid());
                     if (left < right) {
                         node = node.getLeftSon();
                         if (visitedSon == Son.RIGHT) {
                             visited.push(Son.BOTH);
-                            visitedSon = Son.NONE;
-                        }
-                        else {
+                        } else {
                             visited.push(Son.LEFT);
-                            visitedSon = Son.NONE;
                         }
                     } else {
                         node = node.getRightSon();
                         if (visitedSon == Son.LEFT) {
                             visited.push(Son.BOTH);
-                            visitedSon = Son.NONE;
-                        }
-                        else {
+                        } else {
                             visited.push(Son.RIGHT);
-                            visitedSon = Son.NONE;
                         }
                     }
                 }
+                visitedSon = Son.NONE;
             } else {
                 node = stack.pop();
                 visitedSon = visited.pop();
-                if (node.isLeaf()) {
+                if (node.isLeaf() || isAllVisited(node, visitedSon))
                     node = null; //prevent from looping
-                    continue;
-                }
-                if(isAllVisited(node, visitedSon))
-                    node = null;
             }
         }
         return getInstancesQueue(target);
@@ -168,16 +125,13 @@ public class BallTree extends NearestNeighbourSearch implements Tree {
 
     private boolean isAllVisited(BallTreeNode node, Son son) {
         if (node.getLeftSon() != null && node.getRightSon() != null) {
-            if (son == Son.BOTH)
-                return true;
+            return son == Son.BOTH;
         }
         if (node.getLeftSon() != null && node.getRightSon() == null) {
-            if (son == Son.LEFT)
-                return true;
+            return son == Son.LEFT;
         }
         if (node.getLeftSon() == null && node.getRightSon() != null) {
-            if (son == Son.RIGHT)
-                return true;
+            return son == Son.RIGHT;
         }
         return false;
     }
@@ -244,23 +198,13 @@ public class BallTree extends NearestNeighbourSearch implements Tree {
                 }
                 return instance;
             }
-            if (node.getLeftSon() == null) {
-                left = Double.MAX_VALUE;
-            } else {
-                left = MathOperation.euclidDistance(classIndex, target, node.getLeftSon().getCentroid());
-            }
-            if (node.getRightSon() == null) {
-                right = Double.MAX_VALUE;
-            } else {
-                right = MathOperation.euclidDistance(classIndex, target, node.getRightSon().getCentroid());
-            }
+            left = node.getLeftSon() == null ? Double.MAX_VALUE :
+                    MathOperation.euclidDistance(classIndex, target, node.getLeftSon().getCentroid());
+            right = node.getRightSon() == null ? Double.MAX_VALUE :
+                    MathOperation.euclidDistance(classIndex, target, node.getLeftSon().getCentroid());
             if (right == Double.MAX_VALUE && left == Double.MAX_VALUE)
-                System.out.println("Unexpected Ball tree 1234");
-            if (left < right) {
-                node = node.getLeftSon();
-            } else {
-                node = node.getRightSon();
-            }
+                throw new RuntimeException("Unexpected Ball tree 1234");
+            node = left < right ? node.getLeftSon() : node.getRightSon();
         }
     }
 
@@ -281,9 +225,67 @@ public class BallTree extends NearestNeighbourSearch implements Tree {
     }
 
     @Override
-    public void update(Instance ins) throws Exception {
+    public void update(Instance ins) {
+        if (ins.classIndex() != classIndex)
+            throw new RuntimeException("Incorrect class index in instance: " + ins);
         numInst++;
+        if (root == null) {
+            root = new BallTreeNode(ins);
+            root.setCentroid(ins);
+            root.setRadius(Double.MAX_VALUE);
+            return;
+        }
+        BallTreeNode node = root;
+        double leftDistance, rightDistance;
+        while (true) {
+            if (node.isLeaf()) {
+                if (!node.isInstances())
+                    throw new RuntimeException("Leaf without instance");
+                if (node.getInstances().size() < k) {
+                    node.addInstance(ins);
+                    return;
+                }
+                Instances instances = node.getInstances();
+                instances.add(ins);
+                node.clearInstances();
 
+                Instances left = new Instances("left", getALlAttributes(instances.firstInstance()), 0);
+                Instances right = new Instances("right", getALlAttributes(instances.firstInstance()), 0);
+                splitInstances(left, right, instances);
+                if (left.size() > 0) {
+                    node.setLeftSon(returnNode(left));
+                }
+                if (right.size() > 0) {
+                    node.setRightSon(returnNode(right));
+                }
+                return;
+            }
+            leftDistance = node.getLeftSon() == null ? Double.MAX_VALUE : MathOperation.euclidDistance(classIndex, node.getLeftSon().getCentroid(), ins);
+            rightDistance = node.getRightSon() == null ? Double.MAX_VALUE : MathOperation.euclidDistance(classIndex, node.getRightSon().getCentroid(), ins);
+            node = leftDistance < rightDistance ? node.getLeftSon() : node.getRightSon();
+        }
+    }
+
+    private void splitInstances(Instances left, Instances right, Instances instances) {
+        int randomIndex = getRandomIndex(instances);
+        Instance x0 = instances.instance(randomIndex);           //3
+        Instance x1 = getFarthestDistance(instances, x0);        //4
+        Instance x2 = getFarthestDistance(instances, x1);        //5
+        double[][] z = processProjection(x1, x2, instances);     //6
+        Arrays.sort(z, Comparator.comparingDouble(a -> a[0]));
+        double m = z[z.length / 2][0];                      //7
+
+        if (isAllSame(z)) { //special check preventing to cycle algorithm
+            for (int i = 0; i < z.length; i++) {
+                if (i < z.length / 2) left.add(instances.get((int) z[i][1]));
+                else right.add(instances.get((int) z[i][1]));
+            }
+        } else {
+            for (double[] pair : z) {
+                if (pair[0] < m) left.add(instances.get((int) pair[1])); //8
+                else right.add(instances.get((int) pair[1]));            //9
+            }
+        }
     }
 
     @Override
@@ -387,7 +389,6 @@ public class BallTree extends NearestNeighbourSearch implements Tree {
         return result;
     }
 
-
     private Instance getCentroid(Instances data) {
         double[] values = new double[data.numAttributes()];
         for (Instance datum : data) {
@@ -431,6 +432,4 @@ public class BallTree extends NearestNeighbourSearch implements Tree {
         }
         return attr;
     }
-
-
 }

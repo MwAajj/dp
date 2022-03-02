@@ -1,19 +1,20 @@
 package tests;
 
+import structure.Tree;
 import structure.ballTree.BallTree;
+import structure.kdtree.KdTree;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
 import weka.core.Instance;
 import weka.core.Instances;
 
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.Random;
 
 public class Test {
     private static Random rand;
-    private static final int randomSize = 10_000;
-    private static final int attrSize = 3;
+    private static final int randomSize = 1_000;
+    private static final int attrSize = 30;
     private static final int k = 3;
     private static final int neighboursK = 111;
     private static final int classIndex = 0;
@@ -35,16 +36,22 @@ public class Test {
 
     public static void main(String[] args) {
         for (int i = 0; i < randomSize; i++) {
-            //if (i == 3435) {
             instanceArrayList = new Instances("Test", getAttr(), 2);
             baseInstances = new Instances("Test", getAttr(), 2);
             System.out.println(i);
             rand = new Random(i);
             setInstances();
             ballTree(i);
-            // }
+            //kdTree(i);
         }
     }
+
+    private static void kdTree(int i) {
+        KdTree kdTree = new KdTree(false);
+        kdTree.buildTree(baseInstances);
+        testNeighbours(kdTree, i);
+    }
+
 
     private static void ballTree(int i) {
         BallTree ballTree = new BallTree(k);
@@ -52,23 +59,21 @@ public class Test {
         testNeighbours(ballTree, i);
     }
 
-    private static void testNeighbours(BallTree ballTree, int i) {
-        int j = 0;
-        double z = 0;
+    private static void testNeighbours(Tree tree, int i) {
+        //int j  = 0;
         for (Instance instance : instanceArrayList) {
-            //System.out.println("J: " + j);
-            if (j == 0 && i == 3)
-                z = 2;
-            Instances kNearestNeighbours = ballTree.findKNearestNeighbours(instance, neighboursK);
+           //System.out.println("\t J: " + j);
+            Instances kNearestNeighbours = tree.findKNearestNeighbours(instance, neighboursK);
+            if(kNearestNeighbours.size() != neighboursK)
+                throw new RuntimeException("Error in size");
             for (Instance kNearestNeighbour : kNearestNeighbours) {
-                //System.out.println(kNearestNeighbour);
                 for (int k= 0; k < kNearestNeighbours.numAttributes(); k++) {
                     double value = kNearestNeighbour.value(k);
-                    if (value < BOTTOM_BORDER_K && neighboursK <= instancesSizeK)
-                        System.out.println("ERROR");
+                    if (value < BOTTOM_BORDER_K)
+                        throw new RuntimeException("Error in data");
                 }
             }
-            j++;
+            //j++;
         }
     }
 
