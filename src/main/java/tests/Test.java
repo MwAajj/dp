@@ -41,8 +41,8 @@ public class Test {
             System.out.println(i);
             rand = new Random(i);
             setInstances();
-            ballTree(i);
-            //kdTree(i);
+            //ballTree(i);
+            kdTree(i);
         }
     }
 
