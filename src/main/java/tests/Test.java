@@ -13,7 +13,7 @@ import java.util.Random;
 
 public class Test {
     private static Random rand;
-    private static final int randomSize = 100;
+    private static final int randomSize = 1000;
     private static final int attrSize = 30;
     private static final int k = 3;
     private static final int neighboursK = 111;

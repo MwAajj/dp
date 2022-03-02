@@ -193,8 +193,11 @@ public class KdTree extends NearestNeighbourSearch implements Tree {
                 distance = MathOperation.euclidDistance(classIndex, node.getInstance(), target);
                 double max = queue.isEmpty() ? Double.MAX_VALUE
                         : MathOperation.euclidDistance(classIndex, target, queue.peek().getInstance());
-                if (distance < max)
+                if (distance < max) {
                     queue.add(new DistInst(node.getInstance(), distance));
+                    if (queue.size() > k)
+                        queue.poll();
+                }
                 if (target.value(level) <= node.getInstance().value(level)) {
                     node = node.getLeftSon() != null ? node.getLeftSon() : null;
                     visited.push(Son.LEFT);
