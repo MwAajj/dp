@@ -91,8 +91,7 @@ public class KdTree extends NearestNeighbourSearch implements Tree {
         while (!nodeQueue.isEmpty()) {
             node = nodeQueue.poll();
             if (node == null) {
-                System.err.println("Node is null");
-                return;
+                throw new RuntimeException("Node is null");
             }
             int level = node.getLevel();
             Instances[] arr = splitInstances(node.getInstances(), node.getInstance(), level);
@@ -171,7 +170,6 @@ public class KdTree extends NearestNeighbourSearch implements Tree {
         return arr;
     }
 
-
     @Override
     public Instances findKNearestNeighbours(Instance pInstance, int k) {
         checkData(k);
@@ -191,21 +189,11 @@ public class KdTree extends NearestNeighbourSearch implements Tree {
                 distance = MathOperation.euclidDistance(classIndex, node.getInstance(), pInstance);
                 processDistance(instances, node.getInstance(), distance, distances);
                 if (pInstance.value(level) <= node.getInstance().value(level)) {
-                    if (node.getLeftSon() != null) {
-                        node = node.getLeftSon();
-                        visited.push(Son.LEFT);
-                    } else {
-                        node = null;
-                        visited.push(Son.LEFT);
-                    }
+                    node = node.getLeftSon() != null ? node.getLeftSon() : null;
+                    visited.push(Son.LEFT);
                 } else {
-                    if (node.getRightSon() != null) {
-                        node = node.getRightSon();
-                        visited.push(Son.RIGHT);
-                    } else {
-                        node = null;
-                        visited.push(Son.RIGHT);
-                    }
+                    node = node.getRightSon() != null ? node.getRightSon() : null;
+                    visited.push(Son.RIGHT);
                 }
             } else {
                 node = stack.pop();
@@ -226,7 +214,6 @@ public class KdTree extends NearestNeighbourSearch implements Tree {
                 }
             }
         }
-        //printNeighbours(instances, pInstance, distances);
         return instances;
     }
 

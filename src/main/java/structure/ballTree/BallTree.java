@@ -17,7 +17,7 @@ public class BallTree extends NearestNeighbourSearch implements Tree {
     private int numInst = -1;
     private final int k;
     PriorityQueue<DistInst> queue;
-    private static final Random RANDOM = new Random(0);
+    private static final Random RANDOM = new Random();
 
     public BallTree(int k) {
         this.k = k;
@@ -183,6 +183,7 @@ public class BallTree extends NearestNeighbourSearch implements Tree {
 
     @Override
     public Instance nearestNeighbour(Instance target) {
+        queue = new PriorityQueue<>(1);
         BallTreeNode node = this.root;
         double left, right;
         while (true) {
@@ -196,6 +197,7 @@ public class BallTree extends NearestNeighbourSearch implements Tree {
                         instance = node.getInstances().get(i);
                     }
                 }
+                queue.add(new DistInst(instance, min));
                 return instance;
             }
             left = node.getLeftSon() == null ? Double.MAX_VALUE :
@@ -267,7 +269,7 @@ public class BallTree extends NearestNeighbourSearch implements Tree {
     }
 
     private void splitInstances(Instances left, Instances right, Instances instances) {
-        int randomIndex = getRandomIndex(instances);
+        int randomIndex = RANDOM.nextInt(instances.size());
         Instance x0 = instances.instance(randomIndex);           //3
         Instance x1 = getFarthestDistance(instances, x0);        //4
         Instance x2 = getFarthestDistance(instances, x1);        //5
@@ -416,13 +418,6 @@ public class BallTree extends NearestNeighbourSearch implements Tree {
         }
         return instance;
     }
-
-    private int getRandomIndex(Instances data) {
-        int index;
-        index = RANDOM.nextInt(data.size());
-        return index;
-    }
-
 
     @Override
     public ArrayList<Attribute> getALlAttributes(Instance instance) {
