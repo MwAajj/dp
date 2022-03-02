@@ -12,7 +12,8 @@ import java.util.Queue;
 import java.util.*;
 
 public class KdTree extends NearestNeighbourSearch implements Tree {
-    private boolean variance;
+    private final boolean variance;
+    private int numInst = -1;
     private KdTreeNode root = null;
     private int classIndex = -1;
     int[] indices;
@@ -39,27 +40,26 @@ public class KdTree extends NearestNeighbourSearch implements Tree {
 
     /*Add instance to kdTree*/
     @Override
-    public void update(Instance ins) throws Exception {
+    public void update(Instance ins) {
+        numInst++;
         if (root == null) {
-            root.setInstance(ins);
+            root = new KdTreeNode(ins);
             root.setLevel(indices[0]);
             return;
         }
         int level = indices[0];
         KdTreeNode node = root;
         while (true) {
-            if(ins.value(level) <= node.getInstance().value(level)){
-                if(node.getLeftSon() == null) {
+            if (ins.value(level) <= node.getInstance().value(level)) {
+                if (node.getLeftSon() == null) {
                     node.setLeftSon(new KdTreeNode(ins));
-                    node.getLeftSon().setParent(node);
                     node.getLeftSon().setLevel(getNewLevel(node));
                     break;
                 }
                 node = node.getLeftSon();
             } else {
-                if(node.getRightSon() == null) {
+                if (node.getRightSon() == null) {
                     node.setRightSon(new KdTreeNode(ins));
-                    node.getRightSon().setParent(node);
                     node.getRightSon().setLevel(getNewLevel(node));
                 }
                 node = node.getRightSon();
@@ -73,65 +73,37 @@ public class KdTree extends NearestNeighbourSearch implements Tree {
         return RevisionUtils.extract("$Revision: 1 $");
     }
 
-    private void checkData(Instances data) {
-        try {
-            classIndex = data.classIndex();
-        } catch (Exception e) {
-            throw new RuntimeException("Instances doesn't have class index");
-        }
-        if(data.size() == 0)
-            throw new RuntimeException("No data in instances");
-    }
 
     @Override
     public void buildTree(Instances data) {
         checkData(data);
-
+        numInst = data.size();
         if (!variance) indices = getIndices(data.firstInstance());
         else indices = getVariance(data);
-
-        root = new KdTreeNode(data.firstInstance());
         Queue<KdTreeNode> nodeQueue = new LinkedList<>();
         KdTreeNode node;
-        LinkedList<Instances> list = new LinkedList<>();
-        list.add(data);
 
-        Instance instance;
-
-        if (classIndex == 0) {
-            instance = MathOperation.getMedianInstance(new Instances(data), indices[1]);
-            root.setLevel(indices[1]);
-        } else {
-            instance = MathOperation.getMedianInstance(new Instances(data), indices[1]);
-            root.setLevel(indices[0]);
-        }
-
-        root.setInstance(instance);
+        root = new KdTreeNode(data.firstInstance());
+        root.setLevel(indices[classIndex == 0 ? 1 : 0]);
+        root.setInstances(data);
+        root.setInstance(MathOperation.getMedianInstance(new Instances(data), indices[classIndex == 0 ? 1 : 0]));
         nodeQueue.add(root);
-
-        for (int i = 0; i < list.size(); i++) {
-            if (i > 0) {
-                list.set(i - 1, null);
-            }
+        while (!nodeQueue.isEmpty()) {
             node = nodeQueue.poll();
             if (node == null) {
-                System.out.println("Black Magic");
+                System.err.println("Node is null");
                 return;
             }
             int level = node.getLevel();
-            Instances[] arr = splitInstances(list.get(i), node.getInstance(), level);
+            Instances[] arr = splitInstances(node.getInstances(), node.getInstance(), level);
             Instances leftInstances = arr[0];
             Instances rightInstances = arr[1];
-            if (leftInstances.size() > 0)
-                list.add(leftInstances);
-            if (rightInstances.size() > 0)
-                list.add(rightInstances);
             if (leftInstances.size() > 0) {
                 level = getNewLevel(node);
                 Instance leftInstance = MathOperation.getMedianInstance(leftInstances, level);
                 node.setLeftSon(new KdTreeNode(leftInstance));
                 node.getLeftSon().setLevel(level);
-                node.getLeftSon().setParent(node);
+                node.getLeftSon().setInstances(leftInstances);
                 nodeQueue.add(node.getLeftSon());
             }
 
@@ -140,12 +112,11 @@ public class KdTree extends NearestNeighbourSearch implements Tree {
                 Instance rightInstance = MathOperation.getMedianInstance(rightInstances, level);
                 node.setRightSon(new KdTreeNode(rightInstance));
                 node.getRightSon().setLevel(level);
-                node.getRightSon().setParent(node);
+                node.getRightSon().setInstances(rightInstances);
                 nodeQueue.add(node.getRightSon());
             }
+            node.clearInstances();
         }
-        System.out.println();
-        //inOrderPrint();
     }
 
     private int[] getVariance(Instances data) {
@@ -200,8 +171,10 @@ public class KdTree extends NearestNeighbourSearch implements Tree {
         return arr;
     }
 
+
     @Override
     public Instances findKNearestNeighbours(Instance pInstance, int k) {
+        checkData(k);
         Instances instances = initInstances(k);
         Stack<KdTreeNode> stack = new Stack<>();
         Stack<Son> visited = new Stack<>();
@@ -340,6 +313,22 @@ public class KdTree extends NearestNeighbourSearch implements Tree {
         }
         return attr;
     }
+
+    private void checkData(Instances data) {
+        try {
+            classIndex = data.classIndex();
+        } catch (Exception e) {
+            throw new RuntimeException("Instances doesn't have class index");
+        }
+        if (data.size() == 0)
+            throw new RuntimeException("No data in instances");
+    }
+
+    private void checkData(int k) {
+        if (numInst < k)
+            throw new RuntimeException("K is bigger than data");
+    }
+
 
     private void printNeighbours(Instances instances, Instance pInstance, double[] distance) {
         System.out.println("Neighbours of instance: [" + pInstance + "]");
