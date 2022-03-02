@@ -275,16 +275,6 @@ public class KdTree extends NearestNeighbourSearch implements Tree {
         return true;
     }
 
-    private Instances initInstances(int k) {
-        Instances instances = new Instances("Neighbours", getALlAttributes(root.getInstance()), k);
-        for (int i = 0; i < k; i++) {
-            Instance initInstance = new DenseInstance(1, new double[root.getInstance().numAttributes()]);
-            instances.add(initInstance);
-        }
-        instances.setClassIndex(root.getInstance().classIndex());
-        return instances;
-    }
-
     private double axisDistance(Instance pInstance, KdTreeNode node, Son visitedSon) {
         KdTreeNode son = visitedSon == Son.LEFT ? node.getRightSon() : node.getLeftSon();
         int level = node.getLevel();
