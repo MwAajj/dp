@@ -179,18 +179,18 @@ public class Structures {
     }
 
     private static void testNeighbours(Tree tree) {
-        for (int i = 0; i < instancesSizeK; i++) {
+        for (int a = 0; a < instancesSizeK; a++) {
             Instance instance = baseInstances.get(rand.nextInt(baseInstances.size()));
             tree.findKNearestNeighbours(instance, neighboursK);
         }
     }
 
     private static void setInstances() {
-        for (int i = 0; i < instancesSize; i++) {
+        for (int m = 0; m < instancesSize; m++) {
             double[] values = new double[attrSize];
-            for (int j = 0; j < attrSize; j++) {
+            for (int n = 0; n < attrSize; n++) {
                 double val = BOTTOM_BORDER + (ABOVE_BORDER - BOTTOM_BORDER) * rand.nextDouble();
-                values[j] = val;
+                values[n] = val;
             }
             baseInstances.add(new DenseInstance(1d, values));
         }
