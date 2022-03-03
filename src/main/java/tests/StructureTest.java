@@ -1,5 +1,6 @@
 package tests;
 
+import structure.MathOperation;
 import structure.Tree;
 import structure.ballTree.BallTree;
 import structure.kdtree.KdTree;
@@ -9,9 +10,10 @@ import weka.core.Instance;
 import weka.core.Instances;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 
-public class Test {
+public class StructureTest {
     private static Random rand;
     private static final int randomSize = 1000;
     private static final int attrSize = 30;
@@ -40,8 +42,34 @@ public class Test {
             System.out.println(i);
             rand = new Random(i);
             setInstances();
-            ballTree(i);
+            bruteForceNeighbour();
+            //ballTree(i);
             //kdTree(i);
+        }
+    }
+
+    private static void bruteForceNeighbour() {
+        Instances kNearestNeighbours = new Instances("Test", getAttr(), baseInstances.size());
+        double[] neighbours = new double[baseInstances.size()];
+        Arrays.fill(neighbours, Double.MAX_VALUE);
+        for (int i = 0; i < neighboursK; i++) {
+            kNearestNeighbours.add(new DenseInstance(1d, neighbours));
+        }
+        for (int j = 0; j < instancesSizeK; j++) {
+            Instance target = baseInstances.get(rand.nextInt(baseInstances.size()));
+            for (Instance instance : baseInstances) {
+                double v = MathOperation.euclidDistance(classIndex, instance, target);
+                neighbours[j] = v;
+                kNearestNeighbours.set(j, instance);
+            }
+        }
+        Arrays.sort(neighbours);
+        for (Instance kNearestNeighbour : kNearestNeighbours) {
+            for (int k = 0; k < kNearestNeighbours.numAttributes(); k++) {
+                double value = kNearestNeighbour.value(k);
+                if (value < BOTTOM_BORDER_K)
+                    throw new RuntimeException("Error in data");
+            }
         }
     }
 
