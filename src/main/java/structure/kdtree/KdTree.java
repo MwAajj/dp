@@ -15,9 +15,9 @@ public class KdTree extends NearestNeighbourSearch implements Tree {
     private final boolean variance;
     private int numInst = -1;
     private KdTreeNode root = null;
+    PriorityQueue<DistInst> queue;
     private int classIndex = -1;
     int[] indices;
-    double[] distances;
 
     public KdTree(boolean variance) {
         this.variance = variance;
@@ -35,7 +35,13 @@ public class KdTree extends NearestNeighbourSearch implements Tree {
 
     @Override
     public double[] getDistances() {
-        return this.distances;
+        double[] distances = new double[queue.size()];
+        int i = 0;
+        for (DistInst distInst : queue) {
+            distances[i] = distInst.getDistance();
+            i++;
+        }
+        return distances;
     }
 
     /*Add instance to kdTree*/
@@ -171,14 +177,12 @@ public class KdTree extends NearestNeighbourSearch implements Tree {
     }
 
     @Override
-    public Instances findKNearestNeighbours(Instance pInstance, int k) {
+    public Instances findKNearestNeighbours(Instance target, int k) {
         checkData(k);
-        Instances instances = initInstances(k);
+        queue = new PriorityQueue<>();
         Stack<KdTreeNode> stack = new Stack<>();
         Stack<Son> visited = new Stack<>();
         KdTreeNode node = this.root;
-        distances = new double[k];
-        Arrays.fill(distances, Integer.MAX_VALUE);
         int level;
         double distance;
 
@@ -186,9 +190,15 @@ public class KdTree extends NearestNeighbourSearch implements Tree {
             if (node != null) {
                 stack.push(node);
                 level = node.getLevel();
-                distance = MathOperation.euclidDistance(classIndex, node.getInstance(), pInstance);
-                processDistance(instances, node.getInstance(), distance, distances);
-                if (pInstance.value(level) <= node.getInstance().value(level)) {
+                distance = MathOperation.euclidDistance(classIndex, node.getInstance(), target);
+                double max = queue.isEmpty() ? Double.MAX_VALUE
+                        : MathOperation.euclidDistance(classIndex, target, queue.peek().getInstance());
+                if (distance < max) {
+                    queue.add(new DistInst(node.getInstance(), distance));
+                    if (queue.size() > k)
+                        queue.poll();
+                }
+                if (target.value(level) <= node.getInstance().value(level)) {
                     node = node.getLeftSon() != null ? node.getLeftSon() : null;
                     visited.push(Son.LEFT);
                 } else {
@@ -205,18 +215,26 @@ public class KdTree extends NearestNeighbourSearch implements Tree {
                     node = null; // prevent from looping
                     continue; // there is no hope for better point
                 }
-
-                distance = axisDistance(pInstance, node, visitedSon);
-                if (distance < MathOperation.getMaxDistance(distances)) { // there is a hope to find a better node
+                double x = queue.isEmpty() ? Double.MAX_VALUE : queue.peek().getDistance();
+                distance = axisDistance(target, node, visitedSon);
+                if (distance < x) { // there is a hope to find a better node
                     node = visitedSon == Son.LEFT ? node.getRightSon() : node.getLeftSon(); //thanks to this I check every possible node 7,2,0
                 } else {
                     node = null; // prevent from looping
                 }
             }
         }
-        return instances;
+        return getInstancesQueue(target);
     }
 
+    private Instances getInstancesQueue(Instance target) {
+        Instances instances = new Instances("neighbours", getALlAttributes(target), 0);
+        for (DistInst distInst : queue) {
+            instances.add(distInst.getInstance());
+        }
+        instances.setClassIndex(classIndex);
+        return instances;
+    }
 
     private int getNewLevel(KdTreeNode node) {
         int level = node.getLevel();
@@ -258,31 +276,6 @@ public class KdTree extends NearestNeighbourSearch implements Tree {
                 return false;
         }
         return true;
-    }
-
-    private Instances initInstances(int k) {
-        Instances instances = new Instances("Neighbours", getALlAttributes(root.getInstance()), k);
-        for (int i = 0; i < k; i++) {
-            Instance initInstance = new DenseInstance(1, new double[root.getInstance().numAttributes()]);
-            instances.add(initInstance);
-        }
-        instances.setClassIndex(root.getInstance().classIndex());
-        return instances;
-    }
-
-    private void processDistance(Instances instances, Instance instance, double distance, double[] distances) {
-        int index = -1;
-        double max = -Double.MAX_VALUE;
-        for (int i = 0; i < distances.length; i++) {
-            if (max <= distances[i]) {
-                max = distances[i];
-                index = i;
-            }
-        }
-        if (distance < max) { // better distance was founded
-            distances[index] = distance;
-            instances.set(index, instance);
-        }
     }
 
     private double axisDistance(Instance pInstance, KdTreeNode node, Son visitedSon) {

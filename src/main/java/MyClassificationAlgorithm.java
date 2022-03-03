@@ -1,3 +1,4 @@
+import classifier.MyAlgorithm;
 import evaluation.EvaluationManager;
 import instance.InstanceManager;
 import weka.core.DenseInstance;

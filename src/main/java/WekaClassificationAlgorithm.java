@@ -30,7 +30,7 @@ public class WekaClassificationAlgorithm {
         // ---------------------------Decision trees J48---------------------------
         //classifier = new J48();
 
-        //classifier = new MyAlgorithm();
+        //classifier = new classifier.MyAlgorithm();
         //DatasetManager dataset = new DatasetManager(true);
         String fileName = "testData4Fuzzy";
 

@@ -1,13 +1,10 @@
+import classifier.MyAlgorithm;
 import dataset.DatasetManager;
 import evaluation.EvaluationManager;
 import instance.InstanceManager;
 import structure.ballTree.BallTree;
 import structure.kdtree.KdTree;
-import weka.classifiers.Classifier;
-import weka.classifiers.lazy.IBk;
-import weka.core.Instance;
 import weka.core.Instances;
-import weka.core.neighboursearch.KDTree;
 
 public class Source
 {
@@ -22,7 +19,7 @@ public class Source
 
         //String[] options = {"-K", "3", "-F", "2"};
 
-        InstanceManager manager = new InstanceManager("testData3", 2);
+        InstanceManager manager = new InstanceManager("testData5", 2);
 
 
         Instances all = manager.getAll();
@@ -73,6 +70,6 @@ public class Source
 
 
 
-        //EvaluationManager evaluation = new EvaluationManager(classifier, test, all);
+         EvaluationManager evaluation = new EvaluationManager(classifier, test, all);
     }
 }

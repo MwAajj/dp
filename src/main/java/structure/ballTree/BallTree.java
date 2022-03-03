@@ -7,7 +7,6 @@ import structure.Tree;
 import weka.core.*;
 import weka.core.neighboursearch.NearestNeighbourSearch;
 
-import java.io.Serializable;
 import java.util.*;
 import java.util.Queue;
 
@@ -169,17 +168,7 @@ public class BallTree extends NearestNeighbourSearch implements Tree {
     }
 
 
-    @AllArgsConstructor
-    @Getter
-    private static class DistInst implements Comparable<BallTree.DistInst>, Serializable {
-        private Instance instance;
-        private double distance;
 
-        @Override
-        public int compareTo(DistInst o) {
-            return Double.compare(o.distance, this.distance);
-        }
-    }
 
     @Override
     public Instance nearestNeighbour(Instance target) {
