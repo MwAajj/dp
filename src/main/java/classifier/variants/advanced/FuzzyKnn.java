@@ -1,5 +1,6 @@
-package classifier.variants;
+package classifier.variants.advanced;
 
+import classifier.variants.Variant;
 import lombok.Getter;
 import lombok.Setter;
 import structure.MathOperation;

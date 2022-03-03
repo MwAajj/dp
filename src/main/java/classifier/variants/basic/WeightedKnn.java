@@ -1,5 +1,6 @@
-package classifier.variants;
+package classifier.variants.basic;
 
+import classifier.variants.Variant;
 import structure.Tree;
 import weka.core.Instance;
 import weka.core.Instances;

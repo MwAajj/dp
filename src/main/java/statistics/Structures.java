@@ -20,10 +20,10 @@ import java.util.Random;
 
 public class Structures {
     private static Random rand;
-    private static final int randomSize = 50;
+    private static final int randomSize = 10;
     private static final int attrSize = 3;
     private static final int k = 2;
-    private static final int neighboursK = 100;
+    private static final int neighboursK = 3;
     private static final int classIndex = 0;
 
     private static final int instancesSize = 10_000;

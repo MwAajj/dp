@@ -1,6 +1,10 @@
 package classifier;
 
 import classifier.variants.*;
+import classifier.variants.advanced.FuzzyKnn;
+import classifier.variants.advanced.HarmonicKnn;
+import classifier.variants.basic.Knn;
+import classifier.variants.basic.WeightedKnn;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
