@@ -10,6 +10,7 @@ import weka.core.neighboursearch.NearestNeighbourSearch;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 
 public class BruteForce extends NearestNeighbourSearch implements Structure {
     private Instances instances;
@@ -36,7 +37,7 @@ public class BruteForce extends NearestNeighbourSearch implements Structure {
             double distance = MathOperation.euclidDistance(target.classIndex(), instances.get(i), target);
             inst[i] = new DistInst(instances.get(i), distance);
         }
-        Arrays.sort(inst);
+        Arrays.sort(inst, Collections.reverseOrder());
         for (int i = 0; i < k; i++) {
             result.add(inst[i].getInstance());
         }

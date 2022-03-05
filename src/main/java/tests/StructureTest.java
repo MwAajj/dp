@@ -2,6 +2,7 @@ package tests;
 
 import structure.MathOperation;
 import structure.Structure;
+import structure.basic.BruteForce;
 import structure.trees.ballTree.BallTree;
 import structure.trees.kdtree.KdTree;
 import weka.core.Attribute;
@@ -15,9 +16,10 @@ import java.util.Random;
 
 public class StructureTest {
     private static Random rand;
-    private static final int randomSize = 1000;
+    private static final int randomSize = 10000;
     private static final int attrSize = 30;
     private static final int k = 3;
+    private static final int pvd = 99;
     private static final int neighboursK = 111;
     private static final int classIndex = 0;
 
@@ -42,35 +44,16 @@ public class StructureTest {
             System.out.println(i);
             rand = new Random(i);
             setInstances();
-            bruteForceNeighbour();
+            setStructure(i);
             //ballTree(i);
             //kdTree(i);
         }
     }
 
-    private static void bruteForceNeighbour() {
-        Instances kNearestNeighbours = new Instances("Test", getAttr(), baseInstances.size());
-        double[] neighbours = new double[baseInstances.size()];
-        Arrays.fill(neighbours, Double.MAX_VALUE);
-        for (int i = 0; i < neighboursK; i++) {
-            kNearestNeighbours.add(new DenseInstance(1d, neighbours));
-        }
-        for (int j = 0; j < instancesSizeK; j++) {
-            Instance target = baseInstances.get(rand.nextInt(baseInstances.size()));
-            for (Instance instance : baseInstances) {
-                double v = MathOperation.euclidDistance(classIndex, instance, target);
-                neighbours[j] = v;
-                kNearestNeighbours.set(j, instance);
-            }
-        }
-        Arrays.sort(neighbours);
-        for (Instance kNearestNeighbour : kNearestNeighbours) {
-            for (int k = 0; k < kNearestNeighbours.numAttributes(); k++) {
-                double value = kNearestNeighbour.value(k);
-                if (value < BOTTOM_BORDER_K)
-                    throw new RuntimeException("Error in data");
-            }
-        }
+    private static void setStructure(int i) {
+        Structure structure = new BruteForce();
+        structure.buildStructure(baseInstances);
+        testNeighbours(structure, i);
     }
 
     private static void kdTree(int i) {
@@ -108,7 +91,7 @@ public class StructureTest {
         while (instanceArrayList.size() < instancesSizeK) {
             double[] values = new double[attrSize];
             double ran = rand.nextInt(((ABOVE_RANDOM - BOTTOM_RANDOM) + 1)) + BOTTOM_RANDOM;
-            if (ran > 99 && instanceArrayList.size() < instancesSizeK) {
+            if (ran > pvd && instanceArrayList.size() < instancesSizeK) {
                 for (int j = 0; j < attrSize; j++) {
                     double val = rand.nextInt(((ABOVE_BORDER_K - BOTTOM_BORDER_K) + 1)) + BOTTOM_BORDER_K;
                     values[j] = val;
