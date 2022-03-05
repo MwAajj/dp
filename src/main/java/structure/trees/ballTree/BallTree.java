@@ -1,16 +1,15 @@
-package structure.ballTree;
+package structure.trees.ballTree;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import structure.MathOperation;
-import structure.Tree;
+import structure.Structure;
+import structure.trees.Son;
 import weka.core.*;
 import weka.core.neighboursearch.NearestNeighbourSearch;
 
 import java.util.*;
 import java.util.Queue;
 
-public class BallTree extends NearestNeighbourSearch implements Tree {
+public class BallTree extends NearestNeighbourSearch implements Structure {
     private BallTreeNode root = null;
     private int classIndex = -1;
     private int numInst = -1;
@@ -23,7 +22,7 @@ public class BallTree extends NearestNeighbourSearch implements Tree {
     }
 
     @Override
-    public void buildTree(Instances data) {
+    public void buildStructure(Instances data) {
         numInst = data.size();
         Queue<BallTreeNode> nodeQueue = new LinkedList<>();
         classIndex = data.classIndex();
@@ -194,7 +193,7 @@ public class BallTree extends NearestNeighbourSearch implements Tree {
             right = node.getRightSon() == null ? Double.MAX_VALUE :
                     MathOperation.euclidDistance(classIndex, target, node.getLeftSon().getCentroid());
             if (right == Double.MAX_VALUE && left == Double.MAX_VALUE)
-                throw new RuntimeException("Unexpected Ball tree 1234");
+                throw new RuntimeException("Unexpected Ball structure 1234");
             node = left < right ? node.getLeftSon() : node.getRightSon();
         }
     }

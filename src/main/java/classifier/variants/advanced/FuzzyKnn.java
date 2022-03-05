@@ -3,8 +3,7 @@ package classifier.variants.advanced;
 import classifier.variants.Variant;
 import lombok.Getter;
 import lombok.Setter;
-import structure.MathOperation;
-import structure.Tree;
+import structure.Structure;
 import weka.core.Instance;
 import weka.core.Instances;
 
@@ -15,12 +14,12 @@ import java.util.Map;
 @Setter
 public class FuzzyKnn implements Variant {
     Map<Double, Double> info = new HashMap<>();
-    private Tree tree;
+    private Structure structure;
     private int k;
     private int m;
 
-    public FuzzyKnn(Tree tree, int k, int m) {
-        this.tree = tree;
+    public FuzzyKnn(Structure structure, int k, int m) {
+        this.structure = structure;
         this.k = k;
         this.m = m;
     }
@@ -28,10 +27,10 @@ public class FuzzyKnn implements Variant {
     @Override
     public double[] distributionForInstance(Instance instance, int m_NumClasses) {
         double[] result = new double[m_NumClasses];
-        Instances kNearestNeighbours = tree.findKNearestNeighbours(instance, k);
-        double[] distances = tree.getDistances();
+        Instances kNearestNeighbours = structure.findKNearestNeighbours(instance, k);
+        double[] distances = structure.getDistances();
         for (int i = 0; i < m_NumClasses; i++) {
-            double prob = MathOperation.fuzzyDistance(kNearestNeighbours, distances, i, m);
+            double prob = fuzzyDistance(kNearestNeighbours, distances, i, m);
             result[i] = prob;
         }
         return result;
@@ -39,12 +38,12 @@ public class FuzzyKnn implements Variant {
 
     @Override
     public double classifyInstance(Instance instance, int m_NumClasses) {
-        Instances instances = tree.findKNearestNeighbours(instance, k);
-        double[] distances = tree.getDistances();
+        Instances instances = structure.findKNearestNeighbours(instance, k);
+        double[] distances = structure.getDistances();
         double endClass = 0d, max = -1d;
 
         for (int i = 0; i < m_NumClasses; i++) {
-            double prob = MathOperation.fuzzyDistance(instances, distances, i, m);
+            double prob = fuzzyDistance(instances, distances, i, m);
             if (max < prob) {
                 max = prob;
                 endClass = i;
@@ -57,6 +56,22 @@ public class FuzzyKnn implements Variant {
     @Override
     public String getOption() {
         return null;
+    }
+
+
+    //denominator -- down | numerator -- up
+    private double fuzzyDistance(Instances instances, double[] distances, double classValue, int m) {
+        double numeratorSum = 0d, denominatorSum = 0d, upperFraction;
+        int numerator, index = 0;
+        for (Instance value : instances) {
+            numerator = value.classValue() == classValue ? 1 : 0;
+            double pow = Math.pow(distances[index], m);
+            upperFraction = numerator / pow;
+            numeratorSum += upperFraction;
+            denominatorSum += (1 / pow);
+            index++;
+        }
+        return numeratorSum / denominatorSum;
     }
 
     private void printInfo() {

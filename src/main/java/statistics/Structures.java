@@ -3,10 +3,9 @@ package statistics;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import structure.MathOperation;
-import structure.Tree;
-import structure.ballTree.BallTree;
-import structure.kdtree.KdTree;
-import weka.classifiers.lazy.IBk;
+import structure.Structure;
+import structure.trees.ballTree.BallTree;
+import structure.trees.kdtree.KdTree;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
 import weka.core.Instance;
@@ -57,12 +56,12 @@ public class Structures {
 
     private static void kdTreeWeka(int i) {
         try {
-            weka.core.neighboursearch.KDTree tree = new weka.core.neighboursearch.KDTree();
-            tree.setInstances(baseInstances);
+            weka.core.neighboursearch.KDTree structure = new weka.core.neighboursearch.KDTree();
+            structure.setInstances(baseInstances);
             long start = System.currentTimeMillis();
             for (int j = 0; j < instancesSizeK; j++) {
                 Instance target = baseInstances.get(rand.nextInt(baseInstances.size()));
-                tree.kNearestNeighbours(target, neighboursK);
+                structure.kNearestNeighbours(target, neighboursK);
             }
             long finish = System.currentTimeMillis();
             long timeElapsed = finish - start;
@@ -74,12 +73,12 @@ public class Structures {
 
     private static void ballTreeWeka(int i) {
         try {
-            weka.core.neighboursearch.BallTree tree = new weka.core.neighboursearch.BallTree();
-            tree.setInstances(baseInstances);
+            weka.core.neighboursearch.BallTree structure = new weka.core.neighboursearch.BallTree();
+            structure.setInstances(baseInstances);
             long start = System.currentTimeMillis();
             for (int j = 0; j < instancesSizeK; j++) {
                 Instance target = baseInstances.get(rand.nextInt(baseInstances.size()));
-                tree.kNearestNeighbours(target, neighboursK);
+                structure.kNearestNeighbours(target, neighboursK);
             }
             long finish = System.currentTimeMillis();
             long timeElapsed = finish - start;
@@ -150,16 +149,16 @@ public class Structures {
         } catch (Exception e) {
             System.out.println("Exception " + e);
         }
-        System.out.println("Ball tree sum: " + sumB);
-        System.out.println("KD tree sum: " + sumK);
+        System.out.println("Ball structure sum: " + sumB);
+        System.out.println("KD structure sum: " + sumK);
         System.out.println("Brute force sum: " + sumBF);
-        System.out.println("Weka Kd tree sum: " + sumWK);
-        System.out.println("Weka ball tree sum: " + sumWB);
+        System.out.println("Weka Kd structure sum: " + sumWK);
+        System.out.println("Weka ball structure sum: " + sumWB);
     }
 
     private static void kdTree(int i) {
         KdTree kdTree = new KdTree(true);
-        kdTree.buildTree(baseInstances);
+        kdTree.buildStructure(baseInstances);
         long start = System.currentTimeMillis();
         testNeighbours(kdTree);
         long finish = System.currentTimeMillis();
@@ -170,7 +169,7 @@ public class Structures {
 
     private static void ballTree(int i) {
         BallTree ballTree = new BallTree(k);
-        ballTree.buildTree(baseInstances);
+        ballTree.buildStructure(baseInstances);
         long start = System.currentTimeMillis();
         testNeighbours(ballTree);
         long finish = System.currentTimeMillis();
@@ -178,10 +177,10 @@ public class Structures {
         ballTimes[i] = timeElapsed;
     }
 
-    private static void testNeighbours(Tree tree) {
+    private static void testNeighbours(Structure structure) {
         for (int a = 0; a < instancesSizeK; a++) {
             Instance instance = baseInstances.get(rand.nextInt(baseInstances.size()));
-            tree.findKNearestNeighbours(instance, neighboursK);
+            structure.findKNearestNeighbours(instance, neighboursK);
         }
     }
 

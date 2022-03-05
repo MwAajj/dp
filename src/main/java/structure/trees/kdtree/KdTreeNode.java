@@ -1,7 +1,6 @@
-package structure.kdtree;
+package structure.trees.kdtree;
 
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import weka.core.Instance;
 import weka.core.Instances;

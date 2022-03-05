@@ -2,8 +2,8 @@ import classifier.MyAlgorithm;
 import dataset.DatasetManager;
 import evaluation.EvaluationManager;
 import instance.InstanceManager;
-import structure.ballTree.BallTree;
-import structure.kdtree.KdTree;
+import structure.trees.ballTree.BallTree;
+import structure.trees.kdtree.KdTree;
 import weka.core.Instances;
 
 public class Source
@@ -25,7 +25,7 @@ public class Source
         Instances all = manager.getAll();
         Instances test = manager.getTest();
         Instances train = manager.getTrain();
-        ballTree.buildTree(all);
+        ballTree.buildStructure(all);
         ballTree.findKNearestNeighbours(all.firstInstance(), 4);
 
        /*kdTree.buildTree(all);

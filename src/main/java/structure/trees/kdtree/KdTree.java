@@ -1,17 +1,18 @@
-package structure.kdtree;
+package structure.trees.kdtree;
 
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import structure.MathOperation;
-import structure.Tree;
+import structure.Structure;
+import structure.trees.Son;
 import weka.core.*;
 import weka.core.neighboursearch.NearestNeighbourSearch;
 
 import java.util.Queue;
 import java.util.*;
 
-public class KdTree extends NearestNeighbourSearch implements Tree {
+public class KdTree extends NearestNeighbourSearch implements Structure {
     private final boolean variance;
     private int numInst = -1;
     private KdTreeNode root = null;
@@ -81,7 +82,7 @@ public class KdTree extends NearestNeighbourSearch implements Tree {
 
 
     @Override
-    public void buildTree(Instances data) {
+    public void buildStructure(Instances data) {
         checkData(data);
         numInst = data.size();
         if (!variance) indices = getIndices(data.firstInstance());
@@ -92,7 +93,7 @@ public class KdTree extends NearestNeighbourSearch implements Tree {
         root = new KdTreeNode(data.firstInstance());
         root.setLevel(indices[classIndex == 0 ? 1 : 0]);
         root.setInstances(data);
-        root.setInstance(MathOperation.getMedianInstance(new Instances(data), indices[classIndex == 0 ? 1 : 0]));
+        root.setInstance(getMedianInstance(new Instances(data), indices[classIndex == 0 ? 1 : 0]));
         nodeQueue.add(root);
         while (!nodeQueue.isEmpty()) {
             node = nodeQueue.poll();
@@ -105,7 +106,7 @@ public class KdTree extends NearestNeighbourSearch implements Tree {
             Instances rightInstances = arr[1];
             if (leftInstances.size() > 0) {
                 level = getNewLevel(node);
-                Instance leftInstance = MathOperation.getMedianInstance(leftInstances, level);
+                Instance leftInstance = getMedianInstance(leftInstances, level);
                 node.setLeftSon(new KdTreeNode(leftInstance));
                 node.getLeftSon().setLevel(level);
                 node.getLeftSon().setInstances(leftInstances);
@@ -114,7 +115,7 @@ public class KdTree extends NearestNeighbourSearch implements Tree {
 
             if (rightInstances.size() > 0) {
                 level = getNewLevel(node);
-                Instance rightInstance = MathOperation.getMedianInstance(rightInstances, level);
+                Instance rightInstance = getMedianInstance(rightInstances, level);
                 node.setRightSon(new KdTreeNode(rightInstance));
                 node.getRightSon().setLevel(level);
                 node.getRightSon().setInstances(rightInstances);
@@ -239,7 +240,7 @@ public class KdTree extends NearestNeighbourSearch implements Tree {
     private int getNewLevel(KdTreeNode node) {
         int level = node.getLevel();
         level++;
-        if (level == classIndex) //don't organize tree by class index
+        if (level == classIndex) //don't organize structure by class index
             level++;
         level %= root.getInstance().numAttributes();
         level = indices[level];
@@ -292,6 +293,12 @@ public class KdTree extends NearestNeighbourSearch implements Tree {
             attr.add(instance.attribute(i));
         }
         return attr;
+    }
+
+    private static Instance getMedianInstance(Instances data, int level) {
+        Instances instances = new Instances(data);
+        instances.sort(level);
+        return instances.get(instances.size() / 2);
     }
 
     private void checkData(Instances data) {

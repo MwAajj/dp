@@ -1,9 +1,9 @@
 package tests;
 
 import structure.MathOperation;
-import structure.Tree;
-import structure.ballTree.BallTree;
-import structure.kdtree.KdTree;
+import structure.Structure;
+import structure.trees.ballTree.BallTree;
+import structure.trees.kdtree.KdTree;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
 import weka.core.Instance;
@@ -75,22 +75,22 @@ public class StructureTest {
 
     private static void kdTree(int i) {
         KdTree kdTree = new KdTree(false);
-        kdTree.buildTree(baseInstances);
+        kdTree.buildStructure(baseInstances);
         testNeighbours(kdTree, i);
     }
 
 
     private static void ballTree(int i) {
         BallTree ballTree = new BallTree(k);
-        ballTree.buildTree(baseInstances);
+        ballTree.buildStructure(baseInstances);
         testNeighbours(ballTree, i);
     }
 
-    private static void testNeighbours(Tree tree, int i) {
+    private static void testNeighbours(Structure structure, int i) {
         //int j  = 0;
         for (Instance instance : instanceArrayList) {
             //System.out.println("\t J: " + j);
-            Instances kNearestNeighbours = tree.findKNearestNeighbours(instance, neighboursK);
+            Instances kNearestNeighbours = structure.findKNearestNeighbours(instance, neighboursK);
             if (kNearestNeighbours.size() != neighboursK)
                 throw new RuntimeException("Error in size");
             for (Instance kNearestNeighbour : kNearestNeighbours) {

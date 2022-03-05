@@ -1,25 +1,25 @@
 package classifier.variants.basic;
 
 import classifier.variants.Variant;
-import structure.Tree;
+import structure.Structure;
 import weka.core.Instance;
 import weka.core.Instances;
 
 
 public class WeightedKnn implements Variant {
-    private Tree tree;
+    private Structure structure;
     private int k;
 
-    public WeightedKnn(Tree tree, int k) {
-        this.tree = tree;
+    public WeightedKnn(Structure structure, int k) {
+        this.structure = structure;
         this.k = k;
     }
 
     @Override
     public double[] distributionForInstance(Instance instance, int m_NumClasses) {
-        Instances kNearestNeighbours = tree.findKNearestNeighbours(instance, k);
+        Instances kNearestNeighbours = structure.findKNearestNeighbours(instance, k);
         double[] result = new double[m_NumClasses];
-        double[] distances = tree.getDistances();
+        double[] distances = structure.getDistances();
         double[] weight = new double[kNearestNeighbours.size()];
 
         double total = 0d;
@@ -37,8 +37,8 @@ public class WeightedKnn implements Variant {
 
     @Override
     public double classifyInstance(Instance instance, int m_NumClasses) {
-        Instances instances = tree.findKNearestNeighbours(instance, k);
-        double[] distances = tree.getDistances();
+        Instances instances = structure.findKNearestNeighbours(instance, k);
+        double[] distances = structure.getDistances();
         double[] results = new double[m_NumClasses];
         double[] weights = new double[instances.size()];
         for (int i = 0; i < instances.size(); i++) {

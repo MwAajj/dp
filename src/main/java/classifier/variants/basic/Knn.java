@@ -1,7 +1,7 @@
 package classifier.variants.basic;
 
 import classifier.variants.Variant;
-import structure.Tree;
+import structure.Structure;
 import weka.core.Instance;
 import weka.core.Instances;
 
@@ -9,18 +9,18 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Knn implements Variant {
-    private Tree tree;
+    private Structure structure;
     private int k;
 
-    public Knn(Tree tree, int k) {
-        this.tree = tree;
+    public Knn(Structure structure, int k) {
+        this.structure = structure;
         this.k = k;
     }
 
     @Override
     public double[] distributionForInstance(Instance instance, int m_NumClasses) {
         double[] result = new double[m_NumClasses];
-        Instances kNearestNeighbours = tree.findKNearestNeighbours(instance, k);
+        Instances kNearestNeighbours = structure.findKNearestNeighbours(instance, k);
         double weight = 1, total = 0d;
         for (int i = 0; i < kNearestNeighbours.numInstances(); i++) {
             Instance current = kNearestNeighbours.instance(i);
@@ -35,7 +35,7 @@ public class Knn implements Variant {
 
     @Override
     public double classifyInstance(Instance instance, int m_NumClasses) {
-        Instances instances = tree.findKNearestNeighbours(instance, k);
+        Instances instances = structure.findKNearestNeighbours(instance, k);
         Map<Double, Integer> occurrences = getOccurrences(instances);
         int max = Integer.MIN_VALUE;
         double endClass = -1d;
