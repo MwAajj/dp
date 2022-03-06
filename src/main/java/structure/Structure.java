@@ -11,22 +11,16 @@ import java.io.Serializable;
 import java.util.ArrayList;
 
 
-public interface Tree {
+public interface Structure {
 
-    enum Son {
-        NONE,
-        LEFT,
-        RIGHT,
-        BOTH
-    }
-    void buildTree(Instances data);
+    void buildStructure(Instances data);
     Instances findKNearestNeighbours(Instance instance, int k);
     ArrayList<Attribute> getALlAttributes(Instance instance);
     double[] getDistances();
 
     @AllArgsConstructor
     @Getter
-    class DistInst implements Comparable<Tree.DistInst>, Serializable {
+    class DistInst implements Comparable<Structure.DistInst>, Serializable {
         private Instance instance;
         private double distance;
 

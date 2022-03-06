@@ -1,12 +1,17 @@
 package classifier;
 
 import classifier.variants.*;
+import classifier.variants.advanced.FuzzyKnn;
+import classifier.variants.advanced.HarmonicKnn;
+import classifier.variants.basic.Knn;
+import classifier.variants.basic.WeightedKnn;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import structure.Tree;
-import structure.ballTree.BallTree;
-import structure.kdtree.KdTree;
+import structure.Structure;
+import structure.basic.BruteForce;
+import structure.trees.ballTree.BallTree;
+import structure.trees.kdtree.KdTree;
 import weka.classifiers.AbstractClassifier;
 import weka.classifiers.Classifier;
 import weka.core.*;
@@ -21,7 +26,7 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
     private int m_NumClasses = 0;
     private boolean mk_variance = false;
     private int k = 1;
-    private Tree tree;
+    private Structure structure;
 
     public MyAlgorithm(int k) {
         this.k = k;
@@ -31,8 +36,8 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
     public void buildClassifier(Instances data) {
         checkData(data);
         m_NumClasses = data.numDistinctValues(data.classIndex());
-        if (tree == null) tree = new BallTree(k);
-        tree.buildTree(data);
+        if (structure == null) structure = new BallTree(k);
+        structure.buildStructure(data);
     }
 
     //return end class of new instance
@@ -64,17 +69,19 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
         if (Utils.getFlag('V', options))
             mk_variance = true;
         if (Utils.getFlag('B', options))
-            tree = new BallTree(k);
-        else //must be else
-            tree = new KdTree(mk_variance);
+            structure = new BallTree(k);
+        else if(Utils.getFlag('D', options))
+            structure = new KdTree(mk_variance);
+        else
+            structure = new BruteForce();
         if (harmonicString.length() != 0) {
-            variant = new HarmonicKnn(tree, k, Integer.parseInt(harmonicString));
+            variant = new HarmonicKnn(structure, k, Integer.parseInt(harmonicString));
         } else if (fuzzyString.length() != 0) {
-            variant = new FuzzyKnn(tree, k, Integer.parseInt(fuzzyString));
+            variant = new FuzzyKnn(structure, k, Integer.parseInt(fuzzyString));
         } else if (Utils.getFlag('W', options)) {
-            variant = new WeightedKnn(tree, k);
+            variant = new WeightedKnn(structure, k);
         } else {
-            variant = new Knn(tree, k);
+            variant = new Knn(structure, k);
         }
     }
 

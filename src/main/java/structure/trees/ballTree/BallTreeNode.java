@@ -1,4 +1,4 @@
-package structure.ballTree;
+package structure.trees.ballTree;
 
 import lombok.Getter;
 import lombok.Setter;
