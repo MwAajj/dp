@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import structure.Structure;
+import structure.basic.BruteForce;
 import structure.trees.ballTree.BallTree;
 import structure.trees.kdtree.KdTree;
 import weka.classifiers.AbstractClassifier;
@@ -69,8 +70,10 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
             mk_variance = true;
         if (Utils.getFlag('B', options))
             structure = new BallTree(k);
-        else //must be else
+        else if(Utils.getFlag('D', options))
             structure = new KdTree(mk_variance);
+        else
+            structure = new BruteForce();
         if (harmonicString.length() != 0) {
             variant = new HarmonicKnn(structure, k, Integer.parseInt(harmonicString));
         } else if (fuzzyString.length() != 0) {

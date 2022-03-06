@@ -23,16 +23,16 @@ public class DatasetManager {
         this.inputFileName = inputFileName;
         this.outputFileName = outputFileName;
         this.index = classIndex;
-        createArff();
+        processDataset();
     }
 
     public DatasetManager(String inputFileName, String outputFileName) {
         this.inputFileName = inputFileName;
         this.outputFileName = outputFileName;
-        createArff();
+        processDataset();
     }
 
-    public void createArff() {
+    public void processDataset() {
         CSVLoader loader = new CSVLoader();
         loader.setFieldSeparator(DELIMITER);
         Instances instances;
