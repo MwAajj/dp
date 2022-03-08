@@ -55,9 +55,8 @@ public class FuzzyKnn implements Variant {
 
     @Override
     public String getOption() {
-        return null;
+        return "-F";
     }
-
 
     //denominator -- down | numerator -- up
     private double fuzzyDistance(Instances instances, double[] distances, double classValue, int m) {

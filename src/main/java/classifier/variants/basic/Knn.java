@@ -51,7 +51,7 @@ public class Knn implements Variant {
 
     @Override
     public String getOption() {
-        return null;
+        return "";
     }
 
     private Map<Double, Integer> getOccurrences(Instances instances) {
