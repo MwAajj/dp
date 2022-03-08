@@ -19,6 +19,7 @@ public class BruteForce extends NearestNeighbourSearch implements Structure {
     @Override
     public void buildStructure(Instances data) {
         instances = data;
+        instances.setClassIndex(data.classIndex());
     }
 
     private void checkData(Instance instance, int k) {
@@ -31,8 +32,11 @@ public class BruteForce extends NearestNeighbourSearch implements Structure {
     @Override
     public Instances findKNearestNeighbours(Instance target, int k) {
         checkData(target, k);
+        distances = new double[k];
         DistInst[] inst = new DistInst[instances.size()];
         Instances result = new Instances("neighbours", getALlAttributes(instances.firstInstance()), k);
+        result.setClassIndex(instances.classIndex());
+
         for (int i = 0; i < instances.size(); i++) {
             double distance = MathOperation.euclidDistance(target.classIndex(), instances.get(i), target);
             inst[i] = new DistInst(instances.get(i), distance);
@@ -40,6 +44,7 @@ public class BruteForce extends NearestNeighbourSearch implements Structure {
         Arrays.sort(inst, Collections.reverseOrder());
         for (int i = 0; i < k; i++) {
             result.add(inst[i].getInstance());
+            distances[i] = inst[i].getDistance();
         }
         return result;
     }
