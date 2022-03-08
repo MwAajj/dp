@@ -45,13 +45,13 @@ public class Structures {
             System.out.println(i);
             rand = new Random(i);
             setInstances();
-            ballTree(i);
-            ballTreeWeka(i);
-            kdTreeWeka(i);
+            //ballTree(i);
+            //ballTreeWeka(i);
+            //kdTreeWeka(i);
             kdTree(i);
-            bruteForce(i);
+            //bruteForce(i);
         }
-        saveTimeValues();
+        //saveTimeValues();
     }
 
     private static void kdTreeWeka(int i) {
