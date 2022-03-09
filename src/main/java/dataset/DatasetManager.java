@@ -1,6 +1,7 @@
 package dataset;
 
 
+import lombok.Getter;
 import weka.core.Instances;
 import weka.core.converters.ArffSaver;
 import weka.core.converters.CSVLoader;
@@ -10,25 +11,20 @@ import weka.filters.unsupervised.attribute.ReplaceMissingValues;
 
 import java.io.File;
 
+@Getter
 public class DatasetManager {
     private static final String PATH = "src/main/resources/files/";
     private static final String CSV_SUFFIX = ".csv";
     private static final String ARF_SUFFIX = ".arff";
     private static final String DELIMITER = ";";
-    private String outputFileName;
-    private String inputFileName;
+    private final String outputFileName;
+    private final String inputFileName;
     private int index = -1;
 
     public DatasetManager(String inputFileName, String outputFileName, int classIndex) {
         this.inputFileName = inputFileName;
         this.outputFileName = outputFileName;
         this.index = classIndex;
-        processDataset();
-    }
-
-    public DatasetManager(String inputFileName, String outputFileName) {
-        this.inputFileName = inputFileName;
-        this.outputFileName = outputFileName;
         processDataset();
     }
 
@@ -44,7 +40,7 @@ public class DatasetManager {
             System.err.println("Exception" + e);
             throw new RuntimeException(e);
         }
-        if(index == -1)
+        if (index == -1)
             index = instances.numAttributes() - 1;
         instances.setClassIndex(index);
 
@@ -54,7 +50,7 @@ public class DatasetManager {
         ReplaceMissingValues missing = new ReplaceMissingValues();
         Instances processedInstances;
         try {
-           numericToNominal.setInputFormat(instances);
+            numericToNominal.setInputFormat(instances);
             processedInstances = Filter.useFilter(instances, numericToNominal);
             /*missing.setInputFormat(instances);
             processedInstances = Filter.useFilter(instances, missing);*/

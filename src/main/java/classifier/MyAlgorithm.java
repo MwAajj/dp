@@ -60,7 +60,6 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
     @Override
     public void setOptions(String[] options) throws Exception {
         String knnString = Utils.getOption('K', options);
-        String harmonicString = Utils.getOption('H', options);
         String fuzzyString = Utils.getOption('F', options);
 
         if (knnString.length() != 0) {
@@ -70,12 +69,12 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
             mk_variance = true;
         if (Utils.getFlag('B', options))
             structure = new BallTree(k);
-        else if(Utils.getFlag('D', options))
+        else if (Utils.getFlag('D', options))
             structure = new KdTree(mk_variance);
         else
             structure = new BruteForce();
-        if (harmonicString.length() != 0) {
-            variant = new HarmonicKnn(structure, k, Integer.parseInt(harmonicString));
+        if (Utils.getFlag('H', options)) {
+            variant = new HarmonicKnn(structure, k);
         } else if (fuzzyString.length() != 0) {
             variant = new FuzzyKnn(structure, k, Integer.parseInt(fuzzyString));
         } else if (Utils.getFlag('W', options)) {

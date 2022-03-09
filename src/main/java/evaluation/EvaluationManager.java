@@ -1,30 +1,78 @@
 package evaluation;
 
+import lombok.Getter;
 import weka.classifiers.Classifier;
 import weka.classifiers.Evaluation;
 import weka.classifiers.evaluation.ConfusionMatrix;
 import weka.core.Instances;
 
+import java.io.FileWriter;
 import java.util.Random;
 
+@Getter
 public class EvaluationManager {
 
-    public EvaluationManager(Classifier classifier, Instances test, Instances all) throws Exception {
+    private final int seed;
+
+
+    enum Information {
+        ACCURACY,
+        PRECISION,
+        F_MEASURE,
+        RECALL,
+        ESTIMATED_ACCURACY
+    }
+
+    private static final int INFO_SIZE = 5;
+
+    private static final String[] infoName = {
+            "Accuracy: ",
+            "Precision: ",
+            "F-measure: ",
+            "Recall: ",
+            "Estimated Accuracy: "
+    };
+
+    private final Instances test;
+    private final Instances all;
+
+    private double[] infoData;
+
+    private final String[] results;
+    private ConfusionMatrix confusionMatrix;
+
+    public EvaluationManager(Instances test, Instances all, String[] results, int seed) {
+        this.test = test;
+        this.all = all;
+        this.results = results;
+        this.seed = seed;
+    }
+
+
+    public void evaluateModel(Classifier classifier) throws Exception {
+        infoData = new double[INFO_SIZE];
         Evaluation evaluation = new Evaluation(test);
         evaluation.evaluateModel(classifier, test);
-        System.out.println(evaluation.toSummaryString());
+        //System.out.println(evaluation.toSummaryString());
 
-        ConfusionMatrix confusionMatrix = new ConfusionMatrix(new String[] {"Healthy", "Ill"});
+        confusionMatrix = new ConfusionMatrix(results);
         confusionMatrix.addPredictions(evaluation.predictions());
 
-        System.out.println(confusionMatrix);
-        System.out.println("Accuracy: " + evaluation.pctCorrect());
-        System.out.println("Precision: " + evaluation.precision(1));
-        System.out.println("F-measure: " + evaluation.fMeasure(1));
-        System.out.println("Recall: " + evaluation.recall(1));
 
+        infoData[Information.ACCURACY.ordinal()] = evaluation.pctCorrect();
+        infoData[Information.PRECISION.ordinal()] = evaluation.precision(test.classIndex());
+        infoData[Information.F_MEASURE.ordinal()] = evaluation.fMeasure(test.classIndex());
+        infoData[Information.RECALL.ordinal()] = evaluation.recall(test.classIndex());
 
-        evaluation.crossValidateModel(classifier, all, 10, new Random(1));
-        System.out.println("Estimated Accuracy: "+ evaluation.pctCorrect());
+        evaluation.crossValidateModel(classifier, all, 10, new Random(seed));
+
+        infoData[Information.ESTIMATED_ACCURACY.ordinal()] = evaluation.pctCorrect();
+    }
+
+    public void infoPrint() {
+        //System.out.println(confusionMatrix);
+        for (int i = 0; i < infoData.length; i++) {
+            System.out.println(infoName[i] + infoData[i]);
+        }
     }
 }

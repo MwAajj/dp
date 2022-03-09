@@ -1,7 +1,6 @@
 package tests;
 
 import classifier.MyAlgorithm;
-import instance.InstanceManager;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
 import weka.core.Instance;
@@ -14,10 +13,10 @@ public class VariantTest {
     private static Random rand;
     private static final int randomSize = 1000;
     private static final int attrSize = 3;
-    private static final int instancesSize = 20;
+    private static final int instancesSize = 5;
 
-    private static final int neighboursSizeK = 5;
-    private static final int instancesSizeK = 5;
+    private static final int neighboursSizeK = 2;
+    private static final int instancesSizeK = 2;
 
 
     private static final int classIndex = attrSize - 1;
@@ -35,7 +34,7 @@ public class VariantTest {
     private static final int VALUE_OTHERS = 0;
 
     private static MyAlgorithm classifier;
-    private static final String[] options = {"-K", String.valueOf(neighboursSizeK), "-B", "-W"};
+    private static final String[] options = {"-K", String.valueOf(neighboursSizeK), "-H"};
 
     public static void main(String[] args) throws Exception {
         classifier = new MyAlgorithm();
