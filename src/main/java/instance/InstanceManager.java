@@ -63,7 +63,7 @@ public class InstanceManager {
             throw new RuntimeException();
         }
 
-        System.out.println(all.toSummaryString());
+        //System.out.println(all.toSummaryString());
 
         classIndex = classIndex == -1 ? all.numAttributes() - 1 : classIndex;
 

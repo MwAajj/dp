@@ -2,27 +2,50 @@ package statistics;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import structure.MathOperation;
 import structure.Structure;
+import structure.basic.BruteForce;
 import structure.trees.ballTree.BallTree;
 import structure.trees.kdtree.KdTree;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
 import weka.core.Instance;
 import weka.core.Instances;
+import weka.core.neighboursearch.NearestNeighbourSearch;
 
 import java.io.FileWriter;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Random;
 
 public class Structures {
+
+    enum Time {
+        bruteForce,
+        kdTree,
+        ballTree,
+        wekaBallTree,
+        wekaKdTree
+    }
+
+    private static final String[] text = {
+            "Brute force sum: ",
+            "KD structure sum: ",
+            "Ball structure sum: ",
+            "Weka Kd structure sum: ",
+            "Weka ball structure sum: "
+    };
+
+
+    private static final int timeLength = 5;
     private static Random rand;
-    private static final int randomSize = 10;
-    private static final int attrSize = 3;
+
+
+    private static final int randomSize = 100;
+
+
+    private static final int attrSize = 50;
     private static final int k = 2;
-    private static final int neighboursK = 3;
+    private static final int neighboursK = 20;
     private static final int classIndex = 0;
 
     private static final int instancesSize = 10_000;
@@ -33,155 +56,88 @@ public class Structures {
 
     private static Instances baseInstances;
 
-    private static final long[] ballTimes = new long[randomSize];
-    private static final long[] kdTimes = new long[randomSize];
-    private static final long[] bruteForce = new long[randomSize];
-    private static final long[] kdWeka = new long[randomSize];
-    private static final long[] btWeka = new long[randomSize];
 
-    public static void main(String[] args) {
+    private static final long[][] times = new long[randomSize][timeLength];
+
+    public static void main(String[] args) throws Exception {
         for (int i = 0; i < randomSize; i++) {
             baseInstances = new Instances("Test", getAttr(), attrSize);
             System.out.println(i);
             rand = new Random(i);
             setInstances();
-            //ballTree(i);
-            //ballTreeWeka(i);
-            //kdTreeWeka(i);
+            bruteForce(i);
             kdTree(i);
-            //bruteForce(i);
+            ballTree(i);
+            ballTreeWeka(i);
+            kdTreeWeka(i);
         }
-        //saveTimeValues();
+        saveTimeValues();
     }
 
-    private static void kdTreeWeka(int i) {
-        try {
-            weka.core.neighboursearch.KDTree structure = new weka.core.neighboursearch.KDTree();
-            structure.setInstances(baseInstances);
-            long start = System.currentTimeMillis();
-            for (int j = 0; j < instancesSizeK; j++) {
-                Instance target = baseInstances.get(rand.nextInt(baseInstances.size()));
-                structure.kNearestNeighbours(target, neighboursK);
-            }
-            long finish = System.currentTimeMillis();
-            long timeElapsed = finish - start;
-            kdWeka[i] = timeElapsed;
-        } catch (Exception e) {
-            System.out.println("XXX");
-        }
+    private static void kdTreeWeka(int i) throws Exception {
+        weka.core.neighboursearch.KDTree structure = new weka.core.neighboursearch.KDTree();
+        //long l = measureBuildWeka(structure);
+        structure.setInstances(baseInstances);
+        long l = measureNeighbours(structure);
+        times[i][Time.wekaKdTree.ordinal()] = l;
     }
 
-    private static void ballTreeWeka(int i) {
-        try {
-            weka.core.neighboursearch.BallTree structure = new weka.core.neighboursearch.BallTree();
-            structure.setInstances(baseInstances);
-            long start = System.currentTimeMillis();
-            for (int j = 0; j < instancesSizeK; j++) {
-                Instance target = baseInstances.get(rand.nextInt(baseInstances.size()));
-                structure.kNearestNeighbours(target, neighboursK);
-            }
-            long finish = System.currentTimeMillis();
-            long timeElapsed = finish - start;
-            btWeka[i] = timeElapsed;
-        } catch (Exception e) {
-            System.out.println("XXX");
-        }
+    private static void ballTreeWeka(int i) throws Exception {
+        weka.core.neighboursearch.BallTree structure = new weka.core.neighboursearch.BallTree();
+        //long l = measureBuildWeka(structure);
+        structure.setInstances(baseInstances);
+        long l = measureNeighbours(structure);
+        times[i][Time.wekaBallTree.ordinal()] = l;
+
     }
 
-    private static void bruteForce(int i) {
-        long start = System.currentTimeMillis();
-        bruteForceNeighbour();
-        long finish = System.currentTimeMillis();
-        long timeElapsed = finish - start;
-        bruteForce[i] = timeElapsed;
+    private static void bruteForce(int i) throws Exception {
+        BruteForce bruteForce = new BruteForce();
+        //long l = measureBuild(bruteForce);
+        bruteForce.buildStructure(baseInstances);
+        long l = measureNeighbours(bruteForce);
+        times[i][Time.bruteForce.ordinal()] = l;
     }
 
-    private static void bruteForceNeighbour() {
-        for (int j = 0; j < instancesSizeK; j++) {
-            DistInst[] neighbours = new DistInst[baseInstances.size()];
-            Instance target = baseInstances.get(rand.nextInt(baseInstances.size()));
-            int i = 0;
-            for (Instance instance : baseInstances) {
-                double v = MathOperation.euclidDistance(classIndex, instance, target);
-                neighbours[i] = new DistInst(instance, v);
-                i++;
-            }
-            Arrays.sort(neighbours);
-        }
-    }
-
-    @AllArgsConstructor
-    @Getter
-    static class DistInst implements Comparable<DistInst>, Serializable {
-        private Instance instance;
-        private double distance;
-
-        @Override
-        public int compareTo(DistInst o) {
-            return Double.compare(o.distance, this.distance);
-        }
-    }
-
-
-    private static void saveTimeValues() {
-        FileWriter writer;
-        int sumB = 0, sumK = 0, sumBF = 0, sumWB = 0, sumWK = 0;
-        try {
-            writer = new FileWriter("src/main/resources/files/statistics/stat.csv");
-            for (int i = 0; i < ballTimes.length; i++) {
-                sumB += ballTimes[i];
-                sumK += kdTimes[i];
-                sumBF += bruteForce[i];
-                sumWB += btWeka[i];
-                sumWK += kdWeka[i];
-                writer.append(String.valueOf(ballTimes[i]));
-                writer.append(";");
-                writer.append(String.valueOf(kdTimes[i]));
-                writer.append(";");
-                writer.append(String.valueOf(bruteForce[i]));
-                writer.append(";");
-                writer.append(String.valueOf(btWeka[i]));
-                writer.append(";");
-                writer.append(String.valueOf(kdWeka[i]));
-                writer.append("\n");
-            }
-            writer.close();
-        } catch (Exception e) {
-            System.out.println("Exception " + e);
-        }
-        System.out.println("Ball structure sum: " + sumB);
-        System.out.println("KD structure sum: " + sumK);
-        System.out.println("Brute force sum: " + sumBF);
-        System.out.println("Weka Kd structure sum: " + sumWK);
-        System.out.println("Weka ball structure sum: " + sumWB);
-    }
-
-    private static void kdTree(int i) {
+    private static void kdTree(int i) throws Exception {
         KdTree kdTree = new KdTree(true);
+        //long l = measureBuild(kdTree);
         kdTree.buildStructure(baseInstances);
-        long start = System.currentTimeMillis();
-        testNeighbours(kdTree);
-        long finish = System.currentTimeMillis();
-        long timeElapsed = finish - start;
-        kdTimes[i] = timeElapsed;
+        long l = measureNeighbours(kdTree);
+        times[i][Time.kdTree.ordinal()] = l;
     }
 
 
-    private static void ballTree(int i) {
+    private static void ballTree(int i) throws Exception {
         BallTree ballTree = new BallTree(k);
+        //long l = measureBuild(ballTree);
         ballTree.buildStructure(baseInstances);
-        long start = System.currentTimeMillis();
-        testNeighbours(ballTree);
-        long finish = System.currentTimeMillis();
-        long timeElapsed = finish - start;
-        ballTimes[i] = timeElapsed;
+        long l = measureNeighbours(ballTree);
+        times[i][Time.ballTree.ordinal()] = l;
     }
 
-    private static void testNeighbours(Structure structure) {
+    private static long measureBuildWeka(NearestNeighbourSearch structure) throws Exception {
+        long start = System.currentTimeMillis();
+        structure.setInstances(baseInstances);
+        long finish = System.currentTimeMillis();
+        return finish - start;
+    }
+
+    private static long measureBuild(Structure structure) {
+        long start = System.currentTimeMillis();
+        structure.buildStructure(baseInstances);
+        long finish = System.currentTimeMillis();
+        return finish - start;
+    }
+
+    private static long measureNeighbours(NearestNeighbourSearch structure) throws Exception {
+        long start = System.currentTimeMillis();
         for (int a = 0; a < instancesSizeK; a++) {
             Instance instance = baseInstances.get(rand.nextInt(baseInstances.size()));
-            structure.findKNearestNeighbours(instance, neighboursK);
+            structure.kNearestNeighbours(instance, neighboursK);
         }
+        long finish = System.currentTimeMillis();
+        return finish - start;
     }
 
     private static void setInstances() {
@@ -205,4 +161,44 @@ public class Structures {
         return attr;
     }
 
+    @AllArgsConstructor
+    @Getter
+    static class DistInst implements Comparable<DistInst>, Serializable {
+        private Instance instance;
+        private double distance;
+
+        @Override
+        public int compareTo(DistInst o) {
+            return Double.compare(o.distance, this.distance);
+        }
+    }
+
+
+    private static void saveTimeValues() {
+        FileWriter writer;
+        long[][] sum = new long[randomSize][timeLength];
+        try {
+            writer = new FileWriter("src/main/resources/files/statistics/stat.csv");
+            for (int i = 0; i < randomSize; i++) {
+                for (int j = 0; j < times[i].length; j++) {
+                    if (i == 0) sum[i][j] += times[i][j];
+                    else sum[i][j] = sum[i - 1][j] + times[i][j];
+                    writer.append(String.valueOf(times[i][j]));
+                    writer.append(";");
+
+                }
+                for (int j = 0; j < times[i].length; j++) {
+                    writer.append(String.valueOf(sum[i][j]));
+                    writer.append(";");
+                }
+                writer.append("\n");
+            }
+            writer.close();
+        } catch (Exception e) {
+            System.out.println("Exception " + e);
+        }
+        for (int i = 0; i < timeLength; i++) {
+            System.out.println(text[i] + sum[randomSize - 1][i]);
+        }
+    }
 }

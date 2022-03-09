@@ -1,6 +1,5 @@
 package tests;
 
-import structure.MathOperation;
 import structure.Structure;
 import structure.basic.BruteForce;
 import structure.trees.ballTree.BallTree;
@@ -11,12 +10,11 @@ import weka.core.Instance;
 import weka.core.Instances;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Random;
 
 public class StructureTest {
     private static Random rand;
-    private static final int randomSize = 10000;
+    private static final int randomSize = 100;
     private static final int attrSize = 30;
     private static final int k = 3;
     private static final int pvd = 99;
@@ -44,13 +42,13 @@ public class StructureTest {
             System.out.println(i);
             rand = new Random(i);
             setInstances();
-            setStructure(i);
+            //bruteForce(i);
             //ballTree(i);
-            //kdTree(i);
+            kdTree(i);
         }
     }
 
-    private static void setStructure(int i) {
+    private static void bruteForce(int i) {
         Structure structure = new BruteForce();
         structure.buildStructure(baseInstances);
         testNeighbours(structure, i);
