@@ -1,8 +1,7 @@
-package structure.trees.ballTree;
+package classifier.structure.trees.ballTree;
 
-import structure.EuclidDistance;
-import structure.Structure;
-import structure.trees.Son;
+import classifier.structure.Structure;
+import classifier.structure.trees.Son;
 import weka.core.*;
 import weka.core.neighboursearch.NearestNeighbourSearch;
 
@@ -11,6 +10,7 @@ import java.util.Queue;
 
 public class BallTree extends NearestNeighbourSearch implements Structure {
     private BallTreeNode root = null;
+    private DistanceFunction function = null;
     private int classIndex = -1;
     private int numInst = -1;
     private final int k;
@@ -23,6 +23,11 @@ public class BallTree extends NearestNeighbourSearch implements Structure {
 
     public BallTree() {
         this.k = 2;
+    }
+
+    @Override
+    public void setDistanceFunction(DistanceFunction distanceFunction) {
+        function = distanceFunction;
     }
 
     @Override
@@ -88,9 +93,9 @@ public class BallTree extends NearestNeighbourSearch implements Structure {
                     visited.push(Son.BOTH);
                 } else {
                     left = node.getLeftSon() == null || visitedSon == Son.LEFT ? Double.MAX_VALUE
-                            : EuclidDistance.euclidDistance(target, node.getLeftSon().getCentroid()) + node.getLeftSon().getRadius();
+                            : function.distance(target, node.getLeftSon().getCentroid()) + node.getLeftSon().getRadius();
                     right = node.getRightSon() == null || visitedSon == Son.RIGHT ? Double.MAX_VALUE
-                            : EuclidDistance.euclidDistance(target, node.getRightSon().getCentroid()) + node.getRightSon().getRadius();
+                            : function.distance(target, node.getRightSon().getCentroid()) + node.getRightSon().getRadius();
                     if (left < right) {
                         node = node.getLeftSon();
                         if (visitedSon == Son.RIGHT) {
@@ -115,9 +120,9 @@ public class BallTree extends NearestNeighbourSearch implements Structure {
                     node = null; //prevent from looping
                     continue;
                 }
-                d1 = EuclidDistance.euclidDistance(target, node.getCentroid()) - node.getRadius();
+                d1 = function.distance(target, node.getCentroid()) - node.getRadius();
                 d2 = queue.isEmpty() || queue.size() < k ? Double.MAX_VALUE
-                        : EuclidDistance.euclidDistance(target, queue.peek().getInstance());
+                        : function.distance(target, queue.peek().getInstance());
                 if (d2 < d1) {
                     node = null; //there is no hope
                 }
@@ -159,9 +164,9 @@ public class BallTree extends NearestNeighbourSearch implements Structure {
         if (node.getInstances().size() == 0)
             System.out.println("Unexpected processLeaf");
         for (int i = 0; i < node.getInstances().size(); i++) {
-            d3 = EuclidDistance.euclidDistance(target, node.getInstances().get(i));
+            d3 = function.distance(target, node.getInstances().get(i));
             if (queue.isEmpty()) d4 = Double.MAX_VALUE;
-            else d4 = EuclidDistance.euclidDistance(target, queue.peek().getInstance());
+            else d4 = function.distance(target, queue.peek().getInstance());
             if (queue.size() < k)
                 queue.add(new DistInst(node.getInstances().get(i), d3));
             else if (d3 < d4) {
@@ -183,7 +188,7 @@ public class BallTree extends NearestNeighbourSearch implements Structure {
                 double min = Double.MAX_VALUE;
                 Instance instance = null;
                 for (int i = 0; i < node.getInstances().size(); i++) {
-                    double distance = EuclidDistance.euclidDistance(target, node.getInstances().get(i));
+                    double distance = function.distance(target, node.getInstances().get(i));
                     if (min > distance) {
                         min = distance;
                         instance = node.getInstances().get(i);
@@ -193,9 +198,9 @@ public class BallTree extends NearestNeighbourSearch implements Structure {
                 return instance;
             }
             left = node.getLeftSon() == null ? Double.MAX_VALUE :
-                    EuclidDistance.euclidDistance(target, node.getLeftSon().getCentroid());
+                    function.distance(target, node.getLeftSon().getCentroid());
             right = node.getRightSon() == null ? Double.MAX_VALUE :
-                    EuclidDistance.euclidDistance(target, node.getLeftSon().getCentroid());
+                    function.distance(target, node.getLeftSon().getCentroid());
             if (right == Double.MAX_VALUE && left == Double.MAX_VALUE)
                 throw new RuntimeException("Unexpected Ball structure 1234");
             node = left < right ? node.getLeftSon() : node.getRightSon();
@@ -255,8 +260,8 @@ public class BallTree extends NearestNeighbourSearch implements Structure {
                 }
                 return;
             }
-            leftDistance = node.getLeftSon() == null ? Double.MAX_VALUE : EuclidDistance.euclidDistance(node.getLeftSon().getCentroid(), ins);
-            rightDistance = node.getRightSon() == null ? Double.MAX_VALUE : EuclidDistance.euclidDistance(node.getRightSon().getCentroid(), ins);
+            leftDistance = node.getLeftSon() == null ? Double.MAX_VALUE : function.distance(node.getLeftSon().getCentroid(), ins);
+            rightDistance = node.getRightSon() == null ? Double.MAX_VALUE : function.distance(node.getRightSon().getCentroid(), ins);
             node = leftDistance < rightDistance ? node.getLeftSon() : node.getRightSon();
         }
     }
@@ -322,7 +327,7 @@ public class BallTree extends NearestNeighbourSearch implements Structure {
     private double getRadius(Instance centroid, Instances data) {
         double max = -Double.MIN_VALUE;
         for (Instance inst : data) {
-            double distance = EuclidDistance.euclidDistance(inst, centroid);
+            double distance = function.distance(inst, centroid);
             if (distance > max) {
                 max = distance;
             }
@@ -351,12 +356,10 @@ public class BallTree extends NearestNeighbourSearch implements Structure {
         double[] values = new double[data.numAttributes()];
         for (Instance instance : data) {
             for (int j = 0; j < values.length; j++) {
-                //if (j == classIndex) continue;
                 values[j] += instance.value(j);
             }
         }
         for (int i = 0; i < values.length; i++) {
-            //if (i == classIndex) continue;
             values[i] /= data.size();
         }
         return new DenseInstance(1d, values);
@@ -368,8 +371,8 @@ public class BallTree extends NearestNeighbourSearch implements Structure {
         for (Instance inst : data) {
             if (inst == p_instance)
                 continue;
-            double d2 = EuclidDistance.euclidDistance(inst, p_instance);
-            double d1 = EuclidDistance.euclidDistance(p_instance, inst);
+            double d2 = function.distance(inst, p_instance);
+            double d1 = function.distance(p_instance, inst);
             double distance = Math.max(d2, d1); // note
             if (max < distance) {
                 instance = inst;

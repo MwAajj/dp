@@ -4,8 +4,7 @@ import classifier.variants.Variant;
 import classifier.variants.basic.Knn;
 import lombok.Getter;
 import lombok.Setter;
-import structure.EuclidDistance;
-import structure.Structure;
+import classifier.structure.Structure;
 import weka.core.*;
 
 import java.util.*;
@@ -76,7 +75,7 @@ public class HarmonicKnn implements Variant {
         double[] harmonicMeanDistances = new double[m];
         double[] denominator = new double[m];
         for (int i = 0; i < m; i++) {
-            double distance = EuclidDistance.euclidDistance(target, meanVectors.get(i));
+            double distance = euclidDistance(target, meanVectors.get(i));
             denominator[i] = 1 / distance;
             harmonicMeanDistances[i] = m / denominator[i];
         }
@@ -112,6 +111,22 @@ public class HarmonicKnn implements Variant {
             attr.add(instance.attribute(i));
         }
         return attr;
+    }
+
+    public double euclidDistance(Instance first, Instance second) {
+        if (first.numAttributes() != second.numAttributes()) {
+            throw new RuntimeException("CalculateDistance: Incompatible size of instances");
+        }
+        double sum = 0;
+        for (int i = 0; i < first.numAttributes(); i++) {
+            double value = first.value(i);
+            double value1 = second.value(i);
+            double x = value - value1;
+            if (Double.isNaN(x))
+                continue;
+            sum += Math.pow(x, 2);
+        }
+        return Math.sqrt(sum);
     }
 
     private void printInfo() {

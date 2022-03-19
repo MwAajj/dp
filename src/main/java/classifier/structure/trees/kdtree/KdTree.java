@@ -1,11 +1,10 @@
-package structure.trees.kdtree;
+package classifier.structure.trees.kdtree;
 
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import structure.EuclidDistance;
-import structure.Structure;
-import structure.trees.Son;
+import classifier.structure.Structure;
+import classifier.structure.trees.Son;
 import weka.core.*;
 import weka.core.neighboursearch.NearestNeighbourSearch;
 
@@ -14,6 +13,7 @@ import java.util.*;
 
 public class KdTree extends NearestNeighbourSearch implements Structure {
     private final boolean variance;
+    private DistanceFunction function;
     private int numInst = -1;
     private KdTreeNode root = null;
     PriorityQueue<DistInst> queue;
@@ -26,6 +26,11 @@ public class KdTree extends NearestNeighbourSearch implements Structure {
 
     public KdTree() {
         this.variance = false;
+    }
+
+    @Override
+    public void setDistanceFunction(DistanceFunction distanceFunction) {
+        function = distanceFunction;
     }
 
     @Override
@@ -196,9 +201,9 @@ public class KdTree extends NearestNeighbourSearch implements Structure {
             if (node != null) {
                 stack.push(node);
                 level = node.getLevel();
-                distance = EuclidDistance.euclidDistance(node.getInstance(), target);
+                distance = function.distance(node.getInstance(), target);
                 double max = queue.isEmpty() || queue.size() < k ? Double.MAX_VALUE
-                        : EuclidDistance.euclidDistance(target, queue.peek().getInstance());
+                        : function.distance(target, queue.peek().getInstance());
                 if (distance < max) {
                     queue.add(new DistInst(node.getInstance(), distance));
                     if (queue.size() > k)
@@ -321,34 +326,5 @@ public class KdTree extends NearestNeighbourSearch implements Structure {
     private void checkData(int k) {
         if (numInst < k)
             throw new RuntimeException("K is bigger than data");
-    }
-
-
-    private void printNeighbours(Instances instances, Instance pInstance, double[] distance) {
-        System.out.println("Neighbours of instance: [" + pInstance + "]");
-        int index = 0;
-        for (Instance instance : instances) {
-            System.out.print(instance);
-            System.out.println(" \t with distance: " + distance[index]);
-            index++;
-        }
-        System.out.println("--------------------------");
-    }
-
-    public void inOrderPrint() {
-        System.out.println("--------------------IN ORDER-------------------------");
-        Stack<KdTreeNode> stack = new Stack<>();
-        KdTreeNode node = root;
-        while (!stack.isEmpty() || node != null) {
-            if (node != null) {
-                stack.push(node);
-                node = node.getLeftSon();
-            } else {
-                node = stack.pop();
-                System.out.println(node.getInstance());
-                node = node.getRightSon();
-            }
-        }
-        System.out.println("--------------------IN ORDER-------------------------");
     }
 }
