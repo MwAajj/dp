@@ -1,6 +1,7 @@
 package classifier.structure.trees.kdtree;
 
 
+import classifier.EuclideanDistance;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import classifier.structure.Structure;
@@ -13,7 +14,7 @@ import java.util.*;
 
 public class KdTree extends NearestNeighbourSearch implements Structure {
     private final boolean variance;
-    private DistanceFunction function;
+    private DistanceFunction function = new EuclideanDistance();
     private int numInst = -1;
     private KdTreeNode root = null;
     PriorityQueue<DistInst> queue;

@@ -1,5 +1,6 @@
 package classifier.structure.trees.ballTree;
 
+import classifier.EuclideanDistance;
 import classifier.structure.Structure;
 import classifier.structure.trees.Son;
 import weka.core.*;
@@ -10,12 +11,12 @@ import java.util.Queue;
 
 public class BallTree extends NearestNeighbourSearch implements Structure {
     private BallTreeNode root = null;
-    private DistanceFunction function = null;
+    private DistanceFunction function = new EuclideanDistance();
     private int classIndex = -1;
     private int numInst = -1;
     private final int k;
     PriorityQueue<DistInst> queue;
-    private static final Random RANDOM = new Random(0);
+    private static final Random RANDOM = new Random();
 
     public BallTree(int k) {
         this.k = k;

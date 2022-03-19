@@ -44,7 +44,7 @@ public class StatSpeed {
 
 
     private static final int attrSize = 3;
-    private static final int neighboursK = 11;
+    private static final int neighboursK = 3;
     private static final int classIndex = 0;
 
     private static final int instancesSize = 10_000;
