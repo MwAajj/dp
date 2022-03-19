@@ -5,12 +5,14 @@ import structure.Structure;
 import weka.core.Instance;
 import weka.core.Instances;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 public class Knn implements Variant {
-    private Structure structure;
-    private int k;
+    private final Structure structure;
+    private final int k;
 
     public Knn(Structure structure, int k) {
         this.structure = structure;
@@ -21,7 +23,11 @@ public class Knn implements Variant {
     public double[] distributionForInstance(Instance instance, int m_NumClasses) {
         double[] result = new double[m_NumClasses];
         Instances kNearestNeighbours = structure.findKNearestNeighbours(instance, k);
+        double[] distances = structure.getDistances();
         double weight = 1, total = 0d;
+
+        sortInstances(kNearestNeighbours, distances);
+
         for (int i = 0; i < kNearestNeighbours.numInstances(); i++) {
             Instance current = kNearestNeighbours.instance(i);
             result[(int) current.classValue()] += 1;
@@ -31,6 +37,21 @@ public class Knn implements Variant {
             result[i] = result[i] / total;
         }
         return result;
+    }
+
+    public void sortInstances(Instances neighbours, double[] distances) {
+        sortNearestInstances(neighbours, distances);
+    }
+
+    public static void sortNearestInstances(Instances neighbours, double[] distances) {
+        DistInst[] x = new DistInst[neighbours.size()];
+        for (int i = 0; i < neighbours.size(); i++) {
+            x[i] = new DistInst(neighbours.get(i), distances[i]);
+        }
+        Arrays.sort(x, Collections.reverseOrder());
+        for (int i = 0; i < neighbours.size(); i++) {
+            neighbours.set(i, x[i].getInstance());
+        }
     }
 
     @Override

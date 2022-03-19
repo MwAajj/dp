@@ -1,12 +1,15 @@
 package classifier.variants.advanced;
 
 import classifier.variants.Variant;
+import classifier.variants.basic.Knn;
+import classifier.variants.basic.WeightedKnn;
 import lombok.Getter;
 import lombok.Setter;
 import structure.Structure;
 import weka.core.Instance;
 import weka.core.Instances;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -29,11 +32,16 @@ public class FuzzyKnn implements Variant {
         double[] result = new double[m_NumClasses];
         Instances kNearestNeighbours = structure.findKNearestNeighbours(instance, k);
         double[] distances = structure.getDistances();
+        sortInstances(kNearestNeighbours, distances);
         for (int i = 0; i < m_NumClasses; i++) {
             double prob = fuzzyDistance(kNearestNeighbours, distances, i, m);
             result[i] = prob;
         }
         return result;
+    }
+
+    public void sortInstances(Instances neighbours, double[] distances) {
+        Knn.sortNearestInstances(neighbours, distances);
     }
 
     @Override

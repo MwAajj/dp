@@ -1,11 +1,13 @@
 package statistics;
 
+import instance.InstanceManager;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import structure.Structure;
 import structure.basic.BruteForce;
 import structure.trees.ballTree.BallTree;
 import structure.trees.kdtree.KdTree;
+import tests.CompareTest;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
 import weka.core.Instance;
@@ -17,8 +19,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Random;
 
-public class Structures {
-
+public class StatSpeed {
     enum Time {
         bruteForce,
         kdTree,
@@ -40,37 +41,46 @@ public class Structures {
     private static Random rand;
 
 
-    private static final int randomSize = 100;
+    private static final int randomSize = 10;
 
 
-    private static final int attrSize = 50;
+    private static final int attrSize = 3;
     private static final int k = 2;
-    private static final int neighboursK = 20;
+    private static final int neighboursK = 11;
     private static final int classIndex = 0;
 
     private static final int instancesSize = 10_000;
-    private static final int instancesSizeK = 2_000;
+    private static final int instancesSizeK = 20_00;
 
     public static final int ABOVE_BORDER = 1000;
     public static final int BOTTOM_BORDER = 10;
 
     private static Instances baseInstances;
-
-
+    private static final boolean isRandom = true;
     private static final long[][] times = new long[randomSize][timeLength];
 
+
     public static void main(String[] args) throws Exception {
+
+        if (!isRandom) {
+            InstanceManager manager = new InstanceManager("dva", classIndex);
+            baseInstances = manager.getTest();
+        }
+
         for (int i = 0; i < randomSize; i++) {
-            baseInstances = new Instances("Test", getAttr(), attrSize);
             System.out.println(i);
             rand = new Random(i);
-            setInstances();
+            if (isRandom) {
+                baseInstances = new Instances("Test", getAttr(), attrSize);
+                setInstances();
+            }
             bruteForce(i);
             kdTree(i);
             ballTree(i);
             ballTreeWeka(i);
             kdTreeWeka(i);
         }
+        System.out.println();
         saveTimeValues();
     }
 
@@ -88,31 +98,30 @@ public class Structures {
         structure.setInstances(baseInstances);
         long l = measureNeighbours(structure);
         times[i][Time.wekaBallTree.ordinal()] = l;
-
     }
 
     private static void bruteForce(int i) throws Exception {
-        BruteForce bruteForce = new BruteForce();
+        BruteForce structure = new BruteForce();
         //long l = measureBuild(bruteForce);
-        bruteForce.buildStructure(baseInstances);
-        long l = measureNeighbours(bruteForce);
+        structure.buildStructure(baseInstances);
+        long l = measureNeighbours(structure);
         times[i][Time.bruteForce.ordinal()] = l;
     }
 
     private static void kdTree(int i) throws Exception {
-        KdTree kdTree = new KdTree(true);
+        KdTree structure = new KdTree(true);
         //long l = measureBuild(kdTree);
-        kdTree.buildStructure(baseInstances);
-        long l = measureNeighbours(kdTree);
+        structure.buildStructure(baseInstances);
+        long l = measureNeighbours(structure);
         times[i][Time.kdTree.ordinal()] = l;
     }
 
 
     private static void ballTree(int i) throws Exception {
-        BallTree ballTree = new BallTree(k);
+        BallTree structure = new BallTree();
         //long l = measureBuild(ballTree);
-        ballTree.buildStructure(baseInstances);
-        long l = measureNeighbours(ballTree);
+        structure.buildStructure(baseInstances);
+        long l = measureNeighbours(structure);
         times[i][Time.ballTree.ordinal()] = l;
     }
 
@@ -144,7 +153,7 @@ public class Structures {
         for (int m = 0; m < instancesSize; m++) {
             double[] values = new double[attrSize];
             for (int n = 0; n < attrSize; n++) {
-                double val = BOTTOM_BORDER + (ABOVE_BORDER - BOTTOM_BORDER) * rand.nextDouble();
+                int val = BOTTOM_BORDER + rand.nextInt(ABOVE_BORDER - BOTTOM_BORDER);
                 values[n] = val;
             }
             baseInstances.add(new DenseInstance(1d, values));
@@ -169,7 +178,7 @@ public class Structures {
 
         @Override
         public int compareTo(DistInst o) {
-            return Double.compare(o.distance, this.distance);
+            return Double.compare(o.getDistance(), this.distance);
         }
     }
 

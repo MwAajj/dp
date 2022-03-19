@@ -1,6 +1,6 @@
 package structure.trees.ballTree;
 
-import structure.MathOperation;
+import structure.EuclidDistance;
 import structure.Structure;
 import structure.trees.Son;
 import weka.core.*;
@@ -15,10 +15,14 @@ public class BallTree extends NearestNeighbourSearch implements Structure {
     private int numInst = -1;
     private final int k;
     PriorityQueue<DistInst> queue;
-    private static final Random RANDOM = new Random();
+    private static final Random RANDOM = new Random(0);
 
     public BallTree(int k) {
         this.k = k;
+    }
+
+    public BallTree() {
+        this.k = 2;
     }
 
     @Override
@@ -32,7 +36,6 @@ public class BallTree extends NearestNeighbourSearch implements Structure {
         root.setInstances(data);
         BallTreeNode node = root;
         nodeQueue.add(node);
-
         while (!nodeQueue.isEmpty()) {
             node = nodeQueue.poll();
             checkNode(node);
@@ -79,21 +82,15 @@ public class BallTree extends NearestNeighbourSearch implements Structure {
         while (!stack.isEmpty() || node != null) {
             if (node != null) {
                 stack.push(node);
-                d1 = MathOperation.euclidDistance(classIndex, target, node.getCentroid()) - node.getRadius();
-                d2 = queue.isEmpty() ? Double.MAX_VALUE
-                        : MathOperation.euclidDistance(classIndex, target, queue.peek().getInstance());
-                if (d1 >= d2 && queue.size() == k) {
-                    return getInstancesQueue(target);
-                }
                 if (node.isLeaf()) {
                     processLeaf(node, queue, target, k);
                     node = null; //leaf was checked
                     visited.push(Son.BOTH);
                 } else {
                     left = node.getLeftSon() == null || visitedSon == Son.LEFT ? Double.MAX_VALUE
-                            : MathOperation.euclidDistance(classIndex, target, node.getLeftSon().getCentroid());
+                            : EuclidDistance.euclidDistance(target, node.getLeftSon().getCentroid()) + node.getLeftSon().getRadius();
                     right = node.getRightSon() == null || visitedSon == Son.RIGHT ? Double.MAX_VALUE
-                            : MathOperation.euclidDistance(classIndex, target, node.getRightSon().getCentroid());
+                            : EuclidDistance.euclidDistance(target, node.getRightSon().getCentroid()) + node.getRightSon().getRadius();
                     if (left < right) {
                         node = node.getLeftSon();
                         if (visitedSon == Son.RIGHT) {
@@ -114,8 +111,17 @@ public class BallTree extends NearestNeighbourSearch implements Structure {
             } else {
                 node = stack.pop();
                 visitedSon = visited.pop();
-                if (node.isLeaf() || isAllVisited(node, visitedSon))
+                if (node.isLeaf() || isAllVisited(node, visitedSon)) {
                     node = null; //prevent from looping
+                    continue;
+                }
+                d1 = EuclidDistance.euclidDistance(target, node.getCentroid()) - node.getRadius();
+                d2 = queue.isEmpty() || queue.size() < k ? Double.MAX_VALUE
+                        : EuclidDistance.euclidDistance(target, queue.peek().getInstance());
+                if (d2 < d1) {
+                    node = null; //there is no hope
+                }
+
             }
         }
         return getInstancesQueue(target);
@@ -153,9 +159,9 @@ public class BallTree extends NearestNeighbourSearch implements Structure {
         if (node.getInstances().size() == 0)
             System.out.println("Unexpected processLeaf");
         for (int i = 0; i < node.getInstances().size(); i++) {
-            d3 = MathOperation.euclidDistance(classIndex, target, node.getInstances().get(i));
+            d3 = EuclidDistance.euclidDistance(target, node.getInstances().get(i));
             if (queue.isEmpty()) d4 = Double.MAX_VALUE;
-            else d4 = MathOperation.euclidDistance(classIndex, target, queue.peek().getInstance());
+            else d4 = EuclidDistance.euclidDistance(target, queue.peek().getInstance());
             if (queue.size() < k)
                 queue.add(new DistInst(node.getInstances().get(i), d3));
             else if (d3 < d4) {
@@ -165,8 +171,6 @@ public class BallTree extends NearestNeighbourSearch implements Structure {
                 queue.poll();
         }
     }
-
-
 
 
     @Override
@@ -179,7 +183,7 @@ public class BallTree extends NearestNeighbourSearch implements Structure {
                 double min = Double.MAX_VALUE;
                 Instance instance = null;
                 for (int i = 0; i < node.getInstances().size(); i++) {
-                    double distance = MathOperation.euclidDistance(classIndex, target, node.getInstances().get(i));
+                    double distance = EuclidDistance.euclidDistance(target, node.getInstances().get(i));
                     if (min > distance) {
                         min = distance;
                         instance = node.getInstances().get(i);
@@ -189,9 +193,9 @@ public class BallTree extends NearestNeighbourSearch implements Structure {
                 return instance;
             }
             left = node.getLeftSon() == null ? Double.MAX_VALUE :
-                    MathOperation.euclidDistance(classIndex, target, node.getLeftSon().getCentroid());
+                    EuclidDistance.euclidDistance(target, node.getLeftSon().getCentroid());
             right = node.getRightSon() == null ? Double.MAX_VALUE :
-                    MathOperation.euclidDistance(classIndex, target, node.getLeftSon().getCentroid());
+                    EuclidDistance.euclidDistance(target, node.getLeftSon().getCentroid());
             if (right == Double.MAX_VALUE && left == Double.MAX_VALUE)
                 throw new RuntimeException("Unexpected Ball structure 1234");
             node = left < right ? node.getLeftSon() : node.getRightSon();
@@ -211,6 +215,7 @@ public class BallTree extends NearestNeighbourSearch implements Structure {
             distances[i] = distInst.getDistance();
             i++;
         }
+        //Utils.normalize(distances);
         return distances;
     }
 
@@ -250,8 +255,8 @@ public class BallTree extends NearestNeighbourSearch implements Structure {
                 }
                 return;
             }
-            leftDistance = node.getLeftSon() == null ? Double.MAX_VALUE : MathOperation.euclidDistance(classIndex, node.getLeftSon().getCentroid(), ins);
-            rightDistance = node.getRightSon() == null ? Double.MAX_VALUE : MathOperation.euclidDistance(classIndex, node.getRightSon().getCentroid(), ins);
+            leftDistance = node.getLeftSon() == null ? Double.MAX_VALUE : EuclidDistance.euclidDistance(node.getLeftSon().getCentroid(), ins);
+            rightDistance = node.getRightSon() == null ? Double.MAX_VALUE : EuclidDistance.euclidDistance(node.getRightSon().getCentroid(), ins);
             node = leftDistance < rightDistance ? node.getLeftSon() : node.getRightSon();
         }
     }
@@ -262,8 +267,9 @@ public class BallTree extends NearestNeighbourSearch implements Structure {
         Instance x1 = getFarthestDistance(instances, x0);        //4
         Instance x2 = getFarthestDistance(instances, x1);        //5
         double[][] z = processProjection(x1, x2, instances);     //6
-        Arrays.sort(z, Comparator.comparingDouble(a -> a[0]));
-        double m = z[z.length / 2][0];                      //7
+        Arrays.sort(z, Comparator.comparingDouble(a -> a[0]));   //7a
+        double m = getMedian(z);                                 //7b
+
 
         if (isAllSame(z)) { //special check preventing to cycle algorithm
             for (int i = 0; i < z.length; i++) {
@@ -276,6 +282,18 @@ public class BallTree extends NearestNeighbourSearch implements Structure {
                 else right.add(instances.get((int) pair[1]));            //9
             }
         }
+    }
+
+    private double getMedian(double[][] z) {
+        double m;
+        int length = z.length;
+        if (length % 2 == 1) {
+            m = z[length / 2][0];
+        } else {
+            double sum = z[length / 2][0] + z[length / 2 - 1][0];
+            m = sum / 2;
+        }
+        return m;
     }
 
     @Override
@@ -292,56 +310,6 @@ public class BallTree extends NearestNeighbourSearch implements Structure {
         return true;
     }
 
-    private void levelOrderPrint() {
-        Queue<BallTreeNode> queue = new LinkedList<>();
-        queue.add(root);
-        while (!queue.isEmpty()) {
-            BallTreeNode tempNode = queue.poll();
-            System.out.println("Centroid: " + tempNode.getCentroid());
-            if (tempNode.isLeaf()) {
-                System.out.println("-----DATA--------");
-                Instances instances = tempNode.getInstances();
-                for (Instance instance : instances) {
-                    System.out.println(instance);
-                }
-                System.out.println("-------------");
-            }
-            if (tempNode.getLeftSon() != null) {
-                queue.add(tempNode.getLeftSon());
-            }
-
-            if (tempNode.getRightSon() != null) {
-                queue.add(tempNode.getRightSon());
-            }
-        }
-    }
-
-
-    public void inOrderPrint() {
-        System.out.println("--------------------IN ORDER-------------------------");
-        Stack<BallTreeNode> stack = new Stack<>();
-        BallTreeNode node = root;
-        while (!stack.isEmpty() || node != null) {
-            if (node != null) {
-                stack.push(node);
-                node = node.getLeftSon();
-            } else {
-                node = stack.pop();
-                System.out.println(node.getCentroid());
-                if (node.isInstances()) {
-                    System.out.println("\t------------");
-                    Instances instances = node.getInstances();
-                    for (int i = 0; i < instances.size(); i++) {
-                        System.out.print("\t" + instances.instance(i));
-                    }
-                    System.out.println("\n\t------------");
-                }
-                node = node.getRightSon();
-            }
-        }
-        System.out.println("--------------------IN ORDER-------------------------");
-    }
-
     private BallTreeNode returnNode(Instances data) {
         Instance centroid = getCentroid(data);
         double radius = getRadius(centroid, data);
@@ -353,8 +321,8 @@ public class BallTree extends NearestNeighbourSearch implements Structure {
 
     private double getRadius(Instance centroid, Instances data) {
         double max = -Double.MIN_VALUE;
-        for (Instance datum : data) {
-            double distance = MathOperation.euclidDistance(classIndex, centroid, datum);
+        for (Instance inst : data) {
+            double distance = EuclidDistance.euclidDistance(inst, centroid);
             if (distance > max) {
                 max = distance;
             }
@@ -381,12 +349,14 @@ public class BallTree extends NearestNeighbourSearch implements Structure {
 
     private Instance getCentroid(Instances data) {
         double[] values = new double[data.numAttributes()];
-        for (Instance datum : data) {
+        for (Instance instance : data) {
             for (int j = 0; j < values.length; j++) {
-                values[j] += datum.value(j);
+                //if (j == classIndex) continue;
+                values[j] += instance.value(j);
             }
         }
         for (int i = 0; i < values.length; i++) {
+            //if (i == classIndex) continue;
             values[i] /= data.size();
         }
         return new DenseInstance(1d, values);
@@ -398,7 +368,9 @@ public class BallTree extends NearestNeighbourSearch implements Structure {
         for (Instance inst : data) {
             if (inst == p_instance)
                 continue;
-            double distance = MathOperation.euclidDistance(classIndex, inst, p_instance);
+            double d2 = EuclidDistance.euclidDistance(inst, p_instance);
+            double d1 = EuclidDistance.euclidDistance(p_instance, inst);
+            double distance = Math.max(d2, d1); // note
             if (max < distance) {
                 instance = inst;
                 max = distance;

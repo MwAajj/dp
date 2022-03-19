@@ -1,11 +1,8 @@
 package structure.basic;
 
-import structure.MathOperation;
+import structure.EuclidDistance;
 import structure.Structure;
-import weka.core.Attribute;
-import weka.core.Instance;
-import weka.core.Instances;
-import weka.core.RevisionUtils;
+import weka.core.*;
 import weka.core.neighboursearch.NearestNeighbourSearch;
 
 import java.util.ArrayList;
@@ -25,6 +22,12 @@ public class BruteForce extends NearestNeighbourSearch implements Structure {
     private void checkData(Instance instance, int k) {
         if (instances.size() < k)
             throw new RuntimeException("K is bigger than data");
+        try {
+            instance.classIndex();
+        } catch (Exception e) {
+            throw new RuntimeException("Exception " + e + " for instance " + instance);
+        }
+
         if (instance.classIndex() != instances.classIndex())
             throw new RuntimeException("Different class indexes");
     }
@@ -38,10 +41,11 @@ public class BruteForce extends NearestNeighbourSearch implements Structure {
         result.setClassIndex(instances.classIndex());
 
         for (int i = 0; i < instances.size(); i++) {
-            double distance = MathOperation.euclidDistance(target.classIndex(), instances.get(i), target);
+            double distance = EuclidDistance.euclidDistance(instances.get(i), target);
             inst[i] = new DistInst(instances.get(i), distance);
         }
         Arrays.sort(inst, Collections.reverseOrder());
+
         for (int i = 0; i < k; i++) {
             result.add(inst[i].getInstance());
             distances[i] = inst[i].getDistance();
@@ -66,8 +70,8 @@ public class BruteForce extends NearestNeighbourSearch implements Structure {
         Instance returnInstance = null;
         distances = new double[1];
         for (Instance instance : instances) {
-            double distance = MathOperation.euclidDistance(target.classIndex(), instance, target);
-            if (distance < min) {
+            double distance = EuclidDistance.euclidDistance(instance, target);
+            if (distance < min && distance != 0d) {
                 min = distance;
                 returnInstance = instance;
                 distances[0] = distance;
@@ -83,6 +87,10 @@ public class BruteForce extends NearestNeighbourSearch implements Structure {
 
     @Override
     public double[] getDistances() {
+        /*for (int i = 0; i < distances.length; i++) {
+            if(distances[i] == 0) distances[i] += 0.00001d; //sum must be greater than zero
+        }*/
+        //Utils.normalize(distances);
         return distances;
     }
 

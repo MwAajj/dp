@@ -1,6 +1,8 @@
 package tests;
 
 import classifier.MyAlgorithm;
+import weka.classifiers.Classifier;
+import weka.classifiers.lazy.IBk;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
 import weka.core.Instance;
@@ -34,11 +36,49 @@ public class VariantTest {
     private static final int VALUE_OTHERS = 0;
 
     private static MyAlgorithm classifier;
-    private static final String[] options = {"-K", String.valueOf(neighboursSizeK), "-H"};
+    private static String[] options = {"-K", String.valueOf(neighboursSizeK), "-H"};
 
     public static void main(String[] args) throws Exception {
-        classifier = new MyAlgorithm();
+        testHmdKnn();
+        //generalTest();
+    }
 
+    private static void testHmdKnn() throws Exception {
+
+        ArrayList<Attribute> attr = new ArrayList<>(3);
+        Attribute x = new Attribute("x", 0);
+        Attribute y = new Attribute("y", 1);
+        Attribute z = new Attribute("z", 2);
+
+        attr.add(x);
+        attr.add(y);
+        attr.add(z);
+
+        Instances inst = new Instances("hmd", attr, 6);
+        inst.add(new DenseInstance(1d, new double[]{1, 2, 1}));
+        inst.add(new DenseInstance(1d, new double[]{1, 3, 1}));
+        inst.add(new DenseInstance(1d, new double[]{10, 9, 1}));
+        inst.add(new DenseInstance(1d, new double[]{8, 7, 1}));
+        inst.add(new DenseInstance(1d, new double[]{9, 9, 1}));
+        inst.add(new DenseInstance(1d, new double[]{555, 444, 0}));
+        inst.setClassIndex(2);
+
+        Instances nn = new Instances("nn", attr, 6);
+        Instance target = new DenseInstance(1d, new double[]{6, 6, 0});
+        nn.add(target);
+        nn.setClassIndex(2);
+
+
+        MyAlgorithm cc = new MyAlgorithm();
+        options = new String[]{"-K", "5", "-H"};
+        cc.setOptions(options);
+        cc.buildClassifier(inst);
+
+        cc.classifyInstance(nn.firstInstance());
+    }
+
+    private static void generalTest() throws Exception {
+        classifier = new MyAlgorithm();
         classifier.setOptions(options);
         for (int i = 0; i < randomSize; i++) {
             instanceArrayList = new Instances("Test", getAttr(), 2);
