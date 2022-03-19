@@ -1,18 +1,14 @@
 package classifier.variants.advanced;
 
 import classifier.variants.Variant;
+import classifier.variants.basic.Knn;
 import lombok.Getter;
 import lombok.Setter;
-import structure.MathOperation;
+import structure.EuclidDistance;
 import structure.Structure;
-import weka.core.Attribute;
-import weka.core.DenseInstance;
-import weka.core.Instance;
-import weka.core.Instances;
+import weka.core.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @Getter
 @Setter
@@ -30,7 +26,9 @@ public class HarmonicKnn implements Variant {
 
     @Override
     public double[] distributionForInstance(Instance instance, int m_NumClasses) {
-        return HmdKnnAlg(instance, m_NumClasses);
+        double[] x = HmdKnnAlg(instance, m_NumClasses);
+        Utils.normalize(x);
+        return x;
     }
 
 
@@ -55,10 +53,15 @@ public class HarmonicKnn implements Variant {
     private double[] HmdKnnAlg(Instance target, int m_NumClasses) {
         this.m = m_NumClasses;
         Instances neighbours = structure.findKNearestNeighbours(target, k);
-        this.distances = structure.getDistances(); //1
+        this.distances = structure.getDistances();
+        sortInstances(neighbours, distances); //1
         Instances meanInstances = getMeanInstances(neighbours); //2
         double[] harmonicMeanDistances = getHarmonicMeanDistances(target, meanInstances); //3 @TODO AKA SUMA, KDE SUMA
         return getResult(harmonicMeanDistances); //4 @TODO AKA SUMA, KDE SUMA
+    }
+
+    public void sortInstances(Instances neighbours, double[] distances) {
+        Knn.sortNearestInstances(neighbours, distances);
     }
 
     private double[] getResult(double[] harmonicMeanDistances) {
@@ -73,7 +76,7 @@ public class HarmonicKnn implements Variant {
         double[] harmonicMeanDistances = new double[m];
         double[] denominator = new double[m];
         for (int i = 0; i < m; i++) {
-            double distance = MathOperation.euclidDistance(target.classIndex(), target, meanVectors.get(i));
+            double distance = EuclidDistance.euclidDistance(target, meanVectors.get(i));
             denominator[i] = 1 / distance;
             harmonicMeanDistances[i] = m / denominator[i];
         }
@@ -83,14 +86,19 @@ public class HarmonicKnn implements Variant {
     private Instances getMeanInstances(Instances neighbours) {
         Instances inst = new Instances("target", getALlAttributes(neighbours.firstInstance()), m);
         double[][] meanVectors = new double[m][neighbours.numAttributes()];
+        int[] counts = new int[m];
+        Arrays.fill(counts, 0);
         for (int i = 0; i < neighbours.size(); i++) {
             for (int j = 0; j < neighbours.numAttributes(); j++) {
+                if (j == neighbours.classIndex()) continue;
                 meanVectors[(int) neighbours.get(i).classValue()][j] += neighbours.get(i).value(j);
             }
+            counts[(int) neighbours.get(i).classValue()] += 1;
         }
         for (int i = 0; i < meanVectors.length; i++) {
             for (int j = 0; j < neighbours.numAttributes(); j++) {
-                meanVectors[i][j] = (1 / (double) k) * meanVectors[i][j];
+                if (j == neighbours.classIndex()) continue;
+                meanVectors[i][j] = (1 / (counts[i] + 0.0001d)) * meanVectors[i][j]; //avoid to div zero
             }
             inst.add(new DenseInstance(1d, meanVectors[i]));
         }

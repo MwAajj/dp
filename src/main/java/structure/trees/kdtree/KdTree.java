@@ -3,7 +3,7 @@ package structure.trees.kdtree;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import structure.MathOperation;
+import structure.EuclidDistance;
 import structure.Structure;
 import structure.trees.Son;
 import weka.core.*;
@@ -24,6 +24,10 @@ public class KdTree extends NearestNeighbourSearch implements Structure {
         this.variance = variance;
     }
 
+    public KdTree() {
+        this.variance = false;
+    }
+
     @Override
     public Instance nearestNeighbour(Instance target) {
         return findKNearestNeighbours(target, 1).firstInstance();
@@ -42,6 +46,7 @@ public class KdTree extends NearestNeighbourSearch implements Structure {
             distances[i] = distInst.getDistance();
             i++;
         }
+        //Utils.normalize(distances);
         return distances;
     }
 
@@ -191,9 +196,9 @@ public class KdTree extends NearestNeighbourSearch implements Structure {
             if (node != null) {
                 stack.push(node);
                 level = node.getLevel();
-                distance = MathOperation.euclidDistance(classIndex, node.getInstance(), target);
-                double max = queue.isEmpty() ? Double.MAX_VALUE
-                        : MathOperation.euclidDistance(classIndex, target, queue.peek().getInstance());
+                distance = EuclidDistance.euclidDistance(node.getInstance(), target);
+                double max = queue.isEmpty() || queue.size() < k ? Double.MAX_VALUE
+                        : EuclidDistance.euclidDistance(target, queue.peek().getInstance());
                 if (distance < max) {
                     queue.add(new DistInst(node.getInstance(), distance));
                     if (queue.size() > k)
@@ -216,8 +221,8 @@ public class KdTree extends NearestNeighbourSearch implements Structure {
                     node = null; // prevent from looping
                     continue; // there is no hope for better point
                 }
-                double x = queue.isEmpty() ? Double.MAX_VALUE : queue.peek().getDistance();
-                distance = axisDistance(target, node, visitedSon);
+                double x = queue.isEmpty() || queue.size() < k ? Double.MAX_VALUE : queue.peek().getDistance();
+                distance = axisDistance(target, node);
                 if (distance < x) { // there is a hope to find a better node
                     node = visitedSon == Son.LEFT ? node.getRightSon() : node.getLeftSon(); //thanks to this I check every possible node 7,2,0
                 } else {
@@ -240,9 +245,12 @@ public class KdTree extends NearestNeighbourSearch implements Structure {
     private int getNewLevel(KdTreeNode node) {
         int level = node.getLevel();
         level++;
-        if (level == classIndex) //don't organize structure by class index
-            level++;
         level %= root.getInstance().numAttributes();
+        if (indices[level] == classIndex) { //don't organize structure by class index
+            level++;
+            level %= root.getInstance().numAttributes();
+        }
+
         level = indices[level];
         return level;
     }
@@ -279,11 +287,10 @@ public class KdTree extends NearestNeighbourSearch implements Structure {
         return true;
     }
 
-    private double axisDistance(Instance pInstance, KdTreeNode node, Son visitedSon) {
-        KdTreeNode son = visitedSon == Son.LEFT ? node.getRightSon() : node.getLeftSon();
+    private double axisDistance(Instance pInstance, KdTreeNode node) {
         int level = node.getLevel();
         //for another axis 0 because we measure distance to section not to point
-        return pInstance.value(level) - son.getInstance().value(level);
+        return Math.sqrt(Math.pow(pInstance.value(level) - node.getInstance().value(level), 2d));
     }
 
     @Override

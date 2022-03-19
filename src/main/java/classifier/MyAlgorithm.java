@@ -103,14 +103,10 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
         // attributes
         result.enable(Capabilities.Capability.NOMINAL_ATTRIBUTES);
         result.enable(Capabilities.Capability.NUMERIC_ATTRIBUTES);
-        result.enable(Capabilities.Capability.DATE_ATTRIBUTES);
-        result.enable(Capabilities.Capability.MISSING_VALUES);
 
         // class
         result.enable(Capabilities.Capability.NOMINAL_CLASS);
         result.enable(Capabilities.Capability.NUMERIC_CLASS);
-        result.enable(Capabilities.Capability.DATE_CLASS);
-        result.enable(Capabilities.Capability.MISSING_CLASS_VALUES);
 
         // instances
         result.setMinimumNumberInstances(0);

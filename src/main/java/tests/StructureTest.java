@@ -42,35 +42,33 @@ public class StructureTest {
             System.out.println(i);
             rand = new Random(i);
             setInstances();
-            //bruteForce(i);
-            //ballTree(i);
-            kdTree(i);
+            bruteForce();
+            ballTree();
+            kdTree();
         }
     }
 
-    private static void bruteForce(int i) {
+    private static void bruteForce() {
         Structure structure = new BruteForce();
         structure.buildStructure(baseInstances);
-        testNeighbours(structure, i);
+        testNeighbours(structure);
     }
 
-    private static void kdTree(int i) {
+    private static void kdTree() {
         KdTree kdTree = new KdTree(false);
         kdTree.buildStructure(baseInstances);
-        testNeighbours(kdTree, i);
+        testNeighbours(kdTree);
     }
 
 
-    private static void ballTree(int i) {
+    private static void ballTree() {
         BallTree ballTree = new BallTree(k);
         ballTree.buildStructure(baseInstances);
-        testNeighbours(ballTree, i);
+        testNeighbours(ballTree);
     }
 
-    private static void testNeighbours(Structure structure, int i) {
-        //int j  = 0;
+    private static void testNeighbours(Structure structure) {
         for (Instance instance : instanceArrayList) {
-            //System.out.println("\t J: " + j);
             Instances kNearestNeighbours = structure.findKNearestNeighbours(instance, neighboursK);
             if (kNearestNeighbours.size() != neighboursK)
                 throw new RuntimeException("Error in size");
@@ -81,7 +79,6 @@ public class StructureTest {
                         throw new RuntimeException("Error in data");
                 }
             }
-            //j++;
         }
     }
 

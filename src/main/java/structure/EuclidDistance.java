@@ -2,9 +2,9 @@ package structure;
 
 import weka.core.Instance;
 
-public final class MathOperation {
+public final class EuclidDistance {
 
-    public static double euclidDistance(int classIndex, Instance old, Instance newInstance) {
+    public static double euclidDistance(Instance old, Instance newInstance) {
         if (old.numAttributes() != newInstance.numAttributes()) {
             throw new RuntimeException("CalculateDistance: Incompatible size of instances");
         }
@@ -13,7 +13,8 @@ public final class MathOperation {
             double value = old.value(i);
             double value1 = newInstance.value(i);
             double x = value - value1;
-            if (i == classIndex) continue; // don't calculate distance for class index
+            if (Double.isNaN(x))
+                continue;
             sum += Math.pow(x, 2);
         }
         return Math.sqrt(sum);

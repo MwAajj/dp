@@ -5,10 +5,9 @@ import structure.Structure;
 import weka.core.Instance;
 import weka.core.Instances;
 
-
 public class WeightedKnn implements Variant {
-    private Structure structure;
-    private int k;
+    private final Structure structure;
+    private final int k;
 
     public WeightedKnn(Structure structure, int k) {
         this.structure = structure;
@@ -21,7 +20,7 @@ public class WeightedKnn implements Variant {
         double[] result = new double[m_NumClasses];
         double[] distances = structure.getDistances();
         double[] weight = new double[kNearestNeighbours.size()];
-
+        sortInstances(kNearestNeighbours, distances);
         double total = 0d;
         for (int i = 0; i < kNearestNeighbours.numInstances(); i++) {
             Instance current = kNearestNeighbours.instance(i);
@@ -33,6 +32,10 @@ public class WeightedKnn implements Variant {
             result[i] = result[i] / total;
         }
         return result;
+    }
+
+    public void sortInstances(Instances neighbours, double[] distances) {
+        Knn.sortNearestInstances(neighbours, distances);
     }
 
     @Override
