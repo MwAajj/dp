@@ -3,11 +3,10 @@ package statistics;
 import instance.InstanceManager;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import structure.Structure;
-import structure.basic.BruteForce;
-import structure.trees.ballTree.BallTree;
-import structure.trees.kdtree.KdTree;
-import tests.CompareTest;
+import classifier.structure.Structure;
+import classifier.structure.basic.BruteForce;
+import classifier.structure.trees.ballTree.BallTree;
+import classifier.structure.trees.kdtree.KdTree;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
 import weka.core.Instance;
@@ -45,7 +44,6 @@ public class StatSpeed {
 
 
     private static final int attrSize = 3;
-    private static final int k = 2;
     private static final int neighboursK = 11;
     private static final int classIndex = 0;
 

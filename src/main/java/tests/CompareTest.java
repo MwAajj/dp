@@ -2,9 +2,9 @@ package tests;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import structure.basic.BruteForce;
-import structure.trees.ballTree.BallTree;
-import structure.trees.kdtree.KdTree;
+import classifier.structure.basic.BruteForce;
+import classifier.structure.trees.ballTree.BallTree;
+import classifier.structure.trees.kdtree.KdTree;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
 import weka.core.Instance;

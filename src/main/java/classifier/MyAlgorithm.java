@@ -8,10 +8,10 @@ import classifier.variants.basic.WeightedKnn;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import structure.Structure;
-import structure.basic.BruteForce;
-import structure.trees.ballTree.BallTree;
-import structure.trees.kdtree.KdTree;
+import classifier.structure.Structure;
+import classifier.structure.basic.BruteForce;
+import classifier.structure.trees.ballTree.BallTree;
+import classifier.structure.trees.kdtree.KdTree;
 import weka.classifiers.AbstractClassifier;
 import weka.classifiers.Classifier;
 import weka.core.*;
@@ -27,6 +27,7 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
     private boolean mk_variance = false;
     private int k = 1;
     private Structure structure;
+    private DistanceFunction m_distanceFunction;
 
     public MyAlgorithm(int k) {
         this.k = k;
@@ -36,7 +37,9 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
     public void buildClassifier(Instances data) {
         checkData(data);
         m_NumClasses = data.numDistinctValues(data.classIndex());
+        if (m_distanceFunction == null) m_distanceFunction = new EuclideanDistance();
         if (structure == null) structure = new BallTree(k);
+        structure.setDistanceFunction(m_distanceFunction);
         structure.buildStructure(data);
     }
 

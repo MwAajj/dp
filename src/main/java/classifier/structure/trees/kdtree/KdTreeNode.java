@@ -1,4 +1,4 @@
-package structure.trees.kdtree;
+package classifier.structure.trees.kdtree;
 
 import lombok.Getter;
 import lombok.Setter;

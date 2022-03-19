@@ -1,7 +1,6 @@
-package structure.basic;
+package classifier.structure.basic;
 
-import structure.EuclidDistance;
-import structure.Structure;
+import classifier.structure.Structure;
 import weka.core.*;
 import weka.core.neighboursearch.NearestNeighbourSearch;
 
@@ -12,6 +11,13 @@ import java.util.Collections;
 public class BruteForce extends NearestNeighbourSearch implements Structure {
     private Instances instances;
     private double[] distances;
+    private DistanceFunction function;
+
+    @Override
+    public void setDistanceFunction(DistanceFunction distanceFunction) {
+        function = distanceFunction;
+    }
+
 
     @Override
     public void buildStructure(Instances data) {
@@ -41,7 +47,7 @@ public class BruteForce extends NearestNeighbourSearch implements Structure {
         result.setClassIndex(instances.classIndex());
 
         for (int i = 0; i < instances.size(); i++) {
-            double distance = EuclidDistance.euclidDistance(instances.get(i), target);
+            double distance = function.distance(instances.get(i), target);
             inst[i] = new DistInst(instances.get(i), distance);
         }
         Arrays.sort(inst, Collections.reverseOrder());
@@ -70,7 +76,7 @@ public class BruteForce extends NearestNeighbourSearch implements Structure {
         Instance returnInstance = null;
         distances = new double[1];
         for (Instance instance : instances) {
-            double distance = EuclidDistance.euclidDistance(instance, target);
+            double distance = function.distance(instance, target);
             if (distance < min && distance != 0d) {
                 min = distance;
                 returnInstance = instance;

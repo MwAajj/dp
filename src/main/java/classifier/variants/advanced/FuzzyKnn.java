@@ -2,14 +2,12 @@ package classifier.variants.advanced;
 
 import classifier.variants.Variant;
 import classifier.variants.basic.Knn;
-import classifier.variants.basic.WeightedKnn;
 import lombok.Getter;
 import lombok.Setter;
-import structure.Structure;
+import classifier.structure.Structure;
 import weka.core.Instance;
 import weka.core.Instances;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 

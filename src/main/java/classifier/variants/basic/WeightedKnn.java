@@ -1,7 +1,7 @@
 package classifier.variants.basic;
 
 import classifier.variants.Variant;
-import structure.Structure;
+import classifier.structure.Structure;
 import weka.core.Instance;
 import weka.core.Instances;
 

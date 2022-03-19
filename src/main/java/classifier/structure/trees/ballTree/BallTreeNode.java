@@ -1,4 +1,4 @@
-package structure.trees.ballTree;
+package classifier.structure.trees.ballTree;
 
 import lombok.Getter;
 import lombok.Setter;
