@@ -54,12 +54,13 @@ public class InstanceManager {
 
     private void process() {
         DataSource source;
+        String filePath = "";
         try {
-            String help = PATH + fileName + ARFF_SUFFIX;
-            source = new DataSource(help);
+            filePath = PATH + fileName + ARFF_SUFFIX;
+            source = new DataSource(filePath);
             all = source.getDataSet();
         } catch (Exception e) {
-            System.err.println("Exception on " + e);
+            System.err.println("File was not found " + filePath);
             throw new RuntimeException();
         }
 

@@ -16,10 +16,10 @@ public class DatasetManager {
     private static final String PATH = "src/main/resources/files/";
     private static final String CSV_SUFFIX = ".csv";
     private static final String ARF_SUFFIX = ".arff";
-    private static final String DELIMITER = ";";
+    private static final String DELIMITER = ",";
     private final String outputFileName;
     private final String inputFileName;
-    private int index = -1;
+    private int index;
 
     public DatasetManager(String inputFileName, String outputFileName, int classIndex) {
         this.inputFileName = inputFileName;

@@ -24,14 +24,14 @@ public class Knn implements Variant {
         double[] result = new double[m_NumClasses];
         Instances kNearestNeighbours = structure.findKNearestNeighbours(instance, k);
         double[] distances = structure.getDistances();
-        double weight = 1, total = 0d;
+        double total = 0d;
 
         sortInstances(kNearestNeighbours, distances);
 
         for (int i = 0; i < kNearestNeighbours.numInstances(); i++) {
             Instance current = kNearestNeighbours.instance(i);
             result[(int) current.classValue()] += 1;
-            total += weight;
+            total++;
         }
         for (int i = 0; i < result.length; i++) {
             result[i] = result[i] / total;

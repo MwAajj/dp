@@ -1,26 +1,40 @@
 package statistics;
 
 import classifier.MyAlgorithm;
+import classifier.structure.trees.ballTree.BallTreeNode;
 import dataset.DatasetManager;
 import evaluation.EvaluationManager;
 import instance.InstanceManager;
 import weka.classifiers.lazy.IBk;
 import weka.core.EuclideanDistance;
 import weka.core.Instances;
+import weka.core.neighboursearch.BallTree;
 
 import java.io.FileWriter;
 
 public class StatsPrecision {
-    private final static int random_size = 5;
+    private final static int random_size = 10;
     private final static String[] files = {
-            //"dva"
-            "Covid_I"
+            //"IRIS"
+            //"EMG"
+            //"Covid_I"
+            //"Maternal"
+            //"EEG"
+            //"Diabetes"
+            "heart"
+
     };
     private final static String[][] results = {
+            //{"Setosa", "Versicolor", "Virginica"}
             //{"normal", "suspect", "pathologic"}
+            //{"healthy", "ill"}
+            //{"high risk", "low risk", "mid risk"}
+            //{"healthy", "ill"}
+            //{"healthy", "ill"}
+            //{"dead", "alive"}
             {"healthy", "ill"}
     };
-    private final static int[] kVariables = {3, 11};
+    private final static int[] kVariables = {5};
     private static FileWriter writer;
 
     public static void main(String[] args) throws Exception {
@@ -39,11 +53,11 @@ public class StatsPrecision {
                 newFilename = fileName + "_" + k;
                 String[][] myOptions = {
                         /*{"-K", String.valueOf(k)},
-                         {"-K", String.valueOf(k), "-W"},*/
+                        {"-K", String.valueOf(k), "-W"},
                         {"-K", String.valueOf(k), "-F", "2"},
-                        //{"-K", String.valueOf(k), "-H"},
-                        {"-K", String.valueOf(k), "-D"},
-                        /*{"-K", String.valueOf(k), "-D", "-W"},
+                        {"-K", String.valueOf(k), "-H"},*/
+                        /*{"-K", String.valueOf(k), "-D"},
+                        {"-K", String.valueOf(k), "-D", "-W"},
                         {"-K", String.valueOf(k), "-D", "-F", "2"},
                         {"-K", String.valueOf(k), "-D", "-H"},*/
                         {"-K", String.valueOf(k), "-B"},
@@ -53,9 +67,9 @@ public class StatsPrecision {
                 };
 
                 String[][] wekaOption = {
-                        {"-K", String.valueOf(k)},
-                        //{"-K", String.valueOf(k), "-I"},
-                        // {"-K", String.valueOf(k), "-F"}
+                        {"-K", String.valueOf(k)}
+                        /*{"-K", String.valueOf(k), "-I"},
+                        {"-K", String.valueOf(k), "-F"}*/
                 };
 
 
@@ -69,7 +83,7 @@ public class StatsPrecision {
                     System.out.println("L: " + l);
 
                     for (int j = 0; j < myOptions.length; j++) {
-                        System.out.println("\t J:" + j);
+                        System.out.println("\t M J:" + j);
                         MyAlgorithm alg = new MyAlgorithm();
                         String[] option = myOptions[j];
                         alg.setOptions(option);
@@ -87,7 +101,9 @@ public class StatsPrecision {
                     }
 
                     for (int j = 0; j < wekaOption.length; j++) {
+                        System.out.println("\t W J:" + j);
                         IBk weka = new IBk();
+                        weka.setNearestNeighbourSearchAlgorithm(new BallTree());
                         weka.getNearestNeighbourSearchAlgorithm().setDistanceFunction(new EuclideanDistance());
                         String[] option = wekaOption[j];
                         weka.setOptions(option);
@@ -112,11 +128,13 @@ public class StatsPrecision {
 
     public static void saveEvaluation(double[] mk, double[] weka) throws Exception {
         for (double v : mk) {
+            System.out.println("MK: " + v);
             writer.append(String.valueOf(v));
             writer.append(";");
         }
         writer.append(";");
         for (double v : weka) {
+            System.out.println("WEKA: " + v);
             writer.append(String.valueOf(v));
             writer.append(";");
         }

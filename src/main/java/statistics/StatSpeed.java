@@ -19,6 +19,11 @@ import java.util.ArrayList;
 import java.util.Random;
 
 public class StatSpeed {
+    enum Variable {
+        attr,
+        k
+    }
+
     enum Time {
         bruteForce,
         kdTree,
@@ -42,84 +47,157 @@ public class StatSpeed {
 
     private static final int randomSize = 10;
 
+    private static final boolean statBuild = false;
+    private static final boolean isRandom = false;
 
-    private static final int attrSize = 3;
-    private static final int neighboursK = 3;
+
     private static final int classIndex = 0;
 
     private static final int instancesSize = 10_000;
-    private static final int instancesSizeK = 20_00;
+    private static final int instancesSizeK = 2_000;
 
-    public static final int ABOVE_BORDER = 1000;
-    public static final int BOTTOM_BORDER = 10;
+    private static final int ABOVE_BORDER = Integer.MAX_VALUE;
+    private static final int BOTTOM_BORDER = 0;
+    private static FileWriter resultFile;
 
+
+    private static int attrSize;
+    private static int neighboursK;
+    private static String type;
     private static Instances baseInstances;
-    private static final boolean isRandom = true;
-    private static final long[][] times = new long[randomSize][timeLength];
 
+    private static long[][] times = new long[randomSize][timeLength];
+    private static long[] results = new long[timeLength];
+
+    private static final int[][] options = {
+            {3, 3},
+            {5, 5},
+            {3, 10},
+            {10, 3},
+            {10, 10},
+            {15, 15},
+            {20, 3},
+            {3, 20},
+            {25, 25},
+            {30, 30},
+            {30, 5},
+            {5, 30},
+    };
+
+    private static final String[] files =
+            {
+                    "Covid_I",
+                    "Diabetes",
+                    "EMG",
+                    "Gender",
+                    "IRIS",
+                    "Maternal",
+            };
+
+    private static String fileName;
 
     public static void main(String[] args) throws Exception {
-
+        type = "_neighbour_";
+        if (statBuild)
+            type = "_build_";
+        resultFile = new FileWriter("src/main/resources/files/statistics/stat_results" + type + ".csv");
         if (!isRandom) {
-            InstanceManager manager = new InstanceManager("dva", classIndex);
-            baseInstances = manager.getTest();
-        }
-
-        for (int i = 0; i < randomSize; i++) {
-            System.out.println(i);
-            rand = new Random(i);
-            if (isRandom) {
-                baseInstances = new Instances("Test", getAttr(), attrSize);
-                setInstances();
+            for (String file : files) {
+                System.out.println("file: " + file);
+                fileName = file;
+                InstanceManager manager = new InstanceManager(fileName, classIndex);
+                baseInstances = manager.getTrain();
+                execute();
             }
-            bruteForce(i);
-            kdTree(i);
-            ballTree(i);
-            ballTreeWeka(i);
-            kdTreeWeka(i);
+        } else execute();
+        resultFile.close();
+    }
+
+    private static void execute() throws Exception {
+        for (int[] option : options) {
+            times = new long[randomSize][timeLength];
+            results = new long[timeLength];
+            System.out.println("-------------------------------------------");
+            attrSize = option[Variable.attr.ordinal()];
+            neighboursK = option[Variable.k.ordinal()];
+            if (!isRandom) {
+                attrSize = baseInstances.firstInstance().numAttributes();
+            }
+            for (int i = 0; i < randomSize; i++) {
+                System.out.println(i);
+                rand = new Random(i);
+                if (isRandom) {
+                    baseInstances = new Instances("Test", getAttr(), attrSize);
+                    setInstances();
+                }
+                bruteForce(i);
+                kdTree(i);
+                ballTree(i);
+                ballTreeWeka(i);
+                kdTreeWeka(i);
+            }
+            saveTimeValues();
         }
-        System.out.println();
-        saveTimeValues();
     }
 
     private static void kdTreeWeka(int i) throws Exception {
         weka.core.neighboursearch.KDTree structure = new weka.core.neighboursearch.KDTree();
-        //long l = measureBuildWeka(structure);
-        structure.setInstances(baseInstances);
-        long l = measureNeighbours(structure);
+        long l;
+        if (statBuild)
+            l = measureBuildWeka(structure);
+        else {
+            structure.setInstances(baseInstances);
+            l = measureNeighbours(structure);
+        }
         times[i][Time.wekaKdTree.ordinal()] = l;
     }
 
     private static void ballTreeWeka(int i) throws Exception {
         weka.core.neighboursearch.BallTree structure = new weka.core.neighboursearch.BallTree();
-        //long l = measureBuildWeka(structure);
-        structure.setInstances(baseInstances);
-        long l = measureNeighbours(structure);
+        long l;
+        if (statBuild) {
+            l = measureBuildWeka(structure);
+        } else {
+            structure.setInstances(baseInstances);
+            l = measureNeighbours(structure);
+        }
         times[i][Time.wekaBallTree.ordinal()] = l;
     }
 
     private static void bruteForce(int i) throws Exception {
         BruteForce structure = new BruteForce();
-        //long l = measureBuild(bruteForce);
-        structure.buildStructure(baseInstances);
-        long l = measureNeighbours(structure);
+        long l;
+        if (statBuild)
+            l = measureBuild(structure);
+        else {
+            structure.buildStructure(baseInstances);
+            l = measureNeighbours(structure);
+        }
         times[i][Time.bruteForce.ordinal()] = l;
     }
 
     private static void kdTree(int i) throws Exception {
         KdTree structure = new KdTree(true);
-        //long l = measureBuild(kdTree);
-        structure.buildStructure(baseInstances);
-        long l = measureNeighbours(structure);
+        long l;
+        if (statBuild)
+            l = measureBuild(structure);
+        else {
+            structure.buildStructure(baseInstances);
+            l = measureNeighbours(structure);
+        }
         times[i][Time.kdTree.ordinal()] = l;
     }
 
 
     private static void ballTree(int i) throws Exception {
         BallTree structure = new BallTree();
-        //long l = measureBuild(ballTree);
-        structure.buildStructure(baseInstances);
-        long l = measureNeighbours(structure);
+        long l;
+        if (statBuild)
+            l = measureBuild(structure);
+        else {
+            structure.buildStructure(baseInstances);
+            l = measureNeighbours(structure);
+        }
         times[i][Time.ballTree.ordinal()] = l;
     }
 
@@ -185,7 +263,11 @@ public class StatSpeed {
         FileWriter writer;
         long[][] sum = new long[randomSize][timeLength];
         try {
-            writer = new FileWriter("src/main/resources/files/statistics/stat.csv");
+
+            if (isRandom)
+                writer = new FileWriter("src/main/resources/files/statistics/stat" + type + attrSize + "A___" + neighboursK + "K.csv");
+            else
+                writer = new FileWriter("src/main/resources/files/statistics/stat_" + type + fileName + "_" + attrSize + "A___" + neighboursK + "_.csv");
             for (int i = 0; i < randomSize; i++) {
                 for (int j = 0; j < times[i].length; j++) {
                     if (i == 0) sum[i][j] += times[i][j];
@@ -201,6 +283,13 @@ public class StatSpeed {
                 writer.append("\n");
             }
             writer.close();
+
+            for (int i = 0; i < results.length; i++) {
+                results[i] = times[randomSize -1][i];
+                resultFile.append(String.valueOf(results[i]));
+                resultFile.append(";");
+            }
+            resultFile.append("\n");
         } catch (Exception e) {
             System.out.println("Exception " + e);
         }

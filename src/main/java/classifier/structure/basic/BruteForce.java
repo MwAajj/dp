@@ -94,10 +94,6 @@ public class BruteForce extends NearestNeighbourSearch implements Structure {
 
     @Override
     public double[] getDistances() {
-        /*for (int i = 0; i < distances.length; i++) {
-            if(distances[i] == 0) distances[i] += 0.00001d; //sum must be greater than zero
-        }*/
-        //Utils.normalize(distances);
         return distances;
     }
 

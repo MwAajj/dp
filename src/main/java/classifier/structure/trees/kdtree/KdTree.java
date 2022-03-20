@@ -52,7 +52,6 @@ public class KdTree extends NearestNeighbourSearch implements Structure {
             distances[i] = distInst.getDistance();
             i++;
         }
-        //Utils.normalize(distances);
         return distances;
     }
 

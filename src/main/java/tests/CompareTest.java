@@ -28,7 +28,7 @@ public class CompareTest {
     private static final int instancesSize = 1_000;
     private static final int instancesSizeK = 2_00;
 
-    public static final int ABOVE_BORDER = 10;
+    public static final int ABOVE_BORDER = Integer.MAX_VALUE;
     public static final int BOTTOM_BORDER = 0;
 
     private static Instances baseInstances;
@@ -67,7 +67,7 @@ public class CompareTest {
     private static void compare() {
         for (int i = 0; i < instancesSizeK; i++) {
             for (int j = 0; j < neighboursK; j++) {
-                //threshold because of normalization
+                //threshold because of comparing doubles for test purposes
                 if (Math.abs(bruteForceInstances[i][j].getDistance() - kdInstances[i][j].getDistance()) > THRESHOLD) {
                     throw new RuntimeException("Kd mistake");
                 }
@@ -112,7 +112,7 @@ public class CompareTest {
 
 
     private static void ballTree() throws Exception {
-        BallTree structure = new BallTree(neighboursK);
+        BallTree structure = new BallTree();
         structure.buildStructure(baseInstances);
         test(structure, 2);
     }
