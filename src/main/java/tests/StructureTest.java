@@ -62,7 +62,7 @@ public class StructureTest {
 
 
     private static void ballTree() {
-        BallTree ballTree = new BallTree(k);
+        BallTree ballTree = new BallTree();
         ballTree.buildStructure(baseInstances);
         testNeighbours(ballTree);
     }

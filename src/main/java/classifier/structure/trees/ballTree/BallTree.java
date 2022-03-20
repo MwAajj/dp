@@ -1,5 +1,6 @@
 package classifier.structure.trees.ballTree;
 
+import classifier.EuclideanDistance;
 import classifier.structure.Structure;
 import classifier.structure.trees.Son;
 import weka.core.*;
@@ -10,19 +11,19 @@ import java.util.Queue;
 
 public class BallTree extends NearestNeighbourSearch implements Structure {
     private BallTreeNode root = null;
-    private DistanceFunction function = null;
+    private DistanceFunction function = new EuclideanDistance();
     private int classIndex = -1;
     private int numInst = -1;
     private final int k;
     PriorityQueue<DistInst> queue;
-    private static final Random RANDOM = new Random(0);
+    private static final Random RANDOM = new Random();
 
     public BallTree(int k) {
         this.k = k;
     }
 
     public BallTree() {
-        this.k = 2;
+        this.k = 40; // according to weka best option for k
     }
 
     @Override
@@ -93,9 +94,9 @@ public class BallTree extends NearestNeighbourSearch implements Structure {
                     visited.push(Son.BOTH);
                 } else {
                     left = node.getLeftSon() == null || visitedSon == Son.LEFT ? Double.MAX_VALUE
-                            : function.distance(target, node.getLeftSon().getCentroid()) + node.getLeftSon().getRadius();
+                            : function.distance(target, node.getLeftSon().getCentroid());
                     right = node.getRightSon() == null || visitedSon == Son.RIGHT ? Double.MAX_VALUE
-                            : function.distance(target, node.getRightSon().getCentroid()) + node.getRightSon().getRadius();
+                            : function.distance(target, node.getRightSon().getCentroid());
                     if (left < right) {
                         node = node.getLeftSon();
                         if (visitedSon == Son.RIGHT) {
@@ -123,7 +124,7 @@ public class BallTree extends NearestNeighbourSearch implements Structure {
                 d1 = function.distance(target, node.getCentroid()) - node.getRadius();
                 d2 = queue.isEmpty() || queue.size() < k ? Double.MAX_VALUE
                         : function.distance(target, queue.peek().getInstance());
-                if (d2 < d1) {
+                if (d2 <= d1) {
                     node = null; //there is no hope
                 }
 
@@ -165,8 +166,10 @@ public class BallTree extends NearestNeighbourSearch implements Structure {
             System.out.println("Unexpected processLeaf");
         for (int i = 0; i < node.getInstances().size(); i++) {
             d3 = function.distance(target, node.getInstances().get(i));
-            if (queue.isEmpty()) d4 = Double.MAX_VALUE;
-            else d4 = function.distance(target, queue.peek().getInstance());
+            if (queue.isEmpty())
+                d4 = Double.MAX_VALUE;
+            else
+                d4 = function.distance(target, queue.peek().getInstance());
             if (queue.size() < k)
                 queue.add(new DistInst(node.getInstances().get(i), d3));
             else if (d3 < d4) {
@@ -220,7 +223,6 @@ public class BallTree extends NearestNeighbourSearch implements Structure {
             distances[i] = distInst.getDistance();
             i++;
         }
-        //Utils.normalize(distances);
         return distances;
     }
 

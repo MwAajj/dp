@@ -6,9 +6,10 @@ import weka.core.Instances;
 import weka.core.Option;
 import weka.core.neighboursearch.PerformanceStats;
 
+import java.io.Serializable;
 import java.util.Enumeration;
 
-public class EuclideanDistance implements DistanceFunction {
+public class EuclideanDistance implements DistanceFunction, Serializable {
 
 
     @Override
@@ -61,7 +62,7 @@ public class EuclideanDistance implements DistanceFunction {
 
 
     @Override
-    public double distance(Instance first, Instance second, PerformanceStats stats) throws Exception {
+    public double distance(Instance first, Instance second, PerformanceStats stats)  {
         return distance(first, second);
     }
 

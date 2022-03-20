@@ -1,5 +1,6 @@
 package classifier.structure.basic;
 
+import classifier.EuclideanDistance;
 import classifier.structure.Structure;
 import weka.core.*;
 import weka.core.neighboursearch.NearestNeighbourSearch;
@@ -11,7 +12,7 @@ import java.util.Collections;
 public class BruteForce extends NearestNeighbourSearch implements Structure {
     private Instances instances;
     private double[] distances;
-    private DistanceFunction function;
+    private DistanceFunction function = new EuclideanDistance();
 
     @Override
     public void setDistanceFunction(DistanceFunction distanceFunction) {
@@ -93,10 +94,6 @@ public class BruteForce extends NearestNeighbourSearch implements Structure {
 
     @Override
     public double[] getDistances() {
-        /*for (int i = 0; i < distances.length; i++) {
-            if(distances[i] == 0) distances[i] += 0.00001d; //sum must be greater than zero
-        }*/
-        //Utils.normalize(distances);
         return distances;
     }
 
