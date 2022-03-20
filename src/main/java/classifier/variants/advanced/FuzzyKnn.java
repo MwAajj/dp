@@ -27,15 +27,32 @@ public class FuzzyKnn implements Variant {
 
     @Override
     public double[] distributionForInstance(Instance instance, int m_NumClasses) {
-        double[] result = new double[m_NumClasses];
+        double[] result;
         Instances kNearestNeighbours = structure.findKNearestNeighbours(instance, k);
         double[] distances = structure.getDistances();
         sortInstances(kNearestNeighbours, distances);
-        for (int i = 0; i < m_NumClasses; i++) {
-            double prob = fuzzyDistance(kNearestNeighbours, distances, i, m);
-            result[i] = prob;
-        }
+        result = fuzzyDistance2(kNearestNeighbours, distances, m, m_NumClasses);
         return result;
+    }
+
+    //denominator -- down | numerator -- up
+    private double[] fuzzyDistance2(Instances kNearestNeighbours, double[] distances, int m, int m_NumClasses) {
+        double upperFraction;
+        int numerator;
+        double[] prob = new double[m_NumClasses];
+
+        for (int i = 0; i < m_NumClasses; i++) {
+            double numeratorSum = 0d, denominatorSum = 0d;
+            for (int j = 0; j < kNearestNeighbours.size(); j++) {
+                numerator = (int) kNearestNeighbours.get(j).classValue() == i ? 1 : 0;
+                double pow = Math.pow(distances[j], 2d / (m - 1));
+                upperFraction = numerator / (pow + 0.0001d);
+                numeratorSum += upperFraction;
+                denominatorSum += (1 / (pow + 0.0001d));
+            }
+            prob[i] = numeratorSum / (denominatorSum + 0.0001d);
+        }
+        return prob;
     }
 
     public void sortInstances(Instances neighbours, double[] distances) {
@@ -64,7 +81,7 @@ public class FuzzyKnn implements Variant {
         return "-F";
     }
 
-    //denominator -- down | numerator -- up
+
     private double fuzzyDistance(Instances instances, double[] distances, double classValue, int m) {
         double numeratorSum = 0d, denominatorSum = 0d, upperFraction;
         int numerator, index = 0;
