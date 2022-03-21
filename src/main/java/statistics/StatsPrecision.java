@@ -1,7 +1,6 @@
 package statistics;
 
 import classifier.MyAlgorithm;
-import classifier.structure.trees.ballTree.BallTreeNode;
 import dataset.DatasetManager;
 import evaluation.EvaluationManager;
 import instance.InstanceManager;
@@ -15,33 +14,30 @@ import java.io.FileWriter;
 public class StatsPrecision {
     private final static int random_size = 10;
     private final static String[] files = {
-            //"IRIS"
-            //"EMG"
-            //"Covid_I"
-            //"Maternal"
-            //"EEG"
-            //"Diabetes"
-            "heart"
+            "Covid_I",
+            "Diabetes",
+            "Cardio",
+            "Gender",
+            "IRIS",
+            "Maternal"
+    };
+    private final static String[][] classOptions = {
+            {"healthy", "ill"},
+            {"healthy", "ill"},
+            {"normal", "suspect", "pathologic"},
+            {"male", "female"},
+            {"Setosa", "Versicolor", "Virginica"},
+            {"high risk", "low risk", "mid risk"}
+    };
 
-    };
-    private final static String[][] results = {
-            //{"Setosa", "Versicolor", "Virginica"}
-            //{"normal", "suspect", "pathologic"}
-            //{"healthy", "ill"}
-            //{"high risk", "low risk", "mid risk"}
-            //{"healthy", "ill"}
-            //{"healthy", "ill"}
-            //{"dead", "alive"}
-            {"healthy", "ill"}
-    };
-    private final static int[] kVariables = {5};
-    private static FileWriter writer;
+    private final static int[] kVariables = {3, 7, 11};
 
     public static void main(String[] args) throws Exception {
         //test();
-
+        FileWriter resultFile = new FileWriter("src/main/resources/files/statistics/statResultPrecision.csv");
         for (int i = 0; i < files.length; i++) {
             String fileName = files[i];
+            System.out.println("Files" + fileName);
             DatasetManager datasetManager = new DatasetManager(fileName, fileName, 0);
 
             InstanceManager manager = new InstanceManager(datasetManager.getOutputFileName(), 0);
@@ -52,24 +48,16 @@ public class StatsPrecision {
                 String newFilename;
                 newFilename = fileName + "_" + k;
                 String[][] myOptions = {
-                        /*{"-K", String.valueOf(k)},
-                        {"-K", String.valueOf(k), "-W"},
-                        {"-K", String.valueOf(k), "-F", "2"},
-                        {"-K", String.valueOf(k), "-H"},*/
-                        /*{"-K", String.valueOf(k), "-D"},
-                        {"-K", String.valueOf(k), "-D", "-W"},
-                        {"-K", String.valueOf(k), "-D", "-F", "2"},
-                        {"-K", String.valueOf(k), "-D", "-H"},*/
                         {"-K", String.valueOf(k), "-B"},
-                        /*{"-K", String.valueOf(k), "-B", "-W"},
+                        {"-K", String.valueOf(k), "-B", "-W"},
                         {"-K", String.valueOf(k), "-B", "-F", "2"},
-                        {"-K", String.valueOf(k), "-B", "-H"},*/
+                        {"-K", String.valueOf(k), "-B", "-H"},
                 };
 
                 String[][] wekaOption = {
-                        {"-K", String.valueOf(k)}
-                        /*{"-K", String.valueOf(k), "-I"},
-                        {"-K", String.valueOf(k), "-F"}*/
+                        {"-K", String.valueOf(k)},
+                        {"-K", String.valueOf(k), "-I"},
+                        {"-K", String.valueOf(k), "-F"}
                 };
 
 
@@ -77,9 +65,9 @@ public class StatsPrecision {
                 double[][] sumWeka = new double[random_size][wekaOption.length];
 
 
-                writer = new FileWriter("src/main/resources/files/statistics/stat" + newFilename + ".csv");
+                FileWriter writer = new FileWriter("src/main/resources/files/statistics/stat" + newFilename + ".csv");
                 for (int l = 0; l < random_size; l++) {
-                    EvaluationManager evaluation = new EvaluationManager(test, all, results[i], l);
+                    EvaluationManager evaluation = new EvaluationManager(test, all, classOptions[i], l);
                     System.out.println("L: " + l);
 
                     for (int j = 0; j < myOptions.length; j++) {
@@ -118,15 +106,16 @@ public class StatsPrecision {
                         else
                             sumWeka[l][j] = sumWeka[l - 1][j] + infoDataWeka[infoDataWeka.length - 1];
                     }
-
-                    saveEvaluation(sumMk[l], sumWeka[l]);
+                    saveEvaluation(writer, sumMk[l], sumWeka[l]);
                 }
+                saveEvaluation(resultFile, sumMk[random_size - 1], sumWeka[random_size - 1]);
                 writer.close();
             }
         }
+        resultFile.close();
     }
 
-    public static void saveEvaluation(double[] mk, double[] weka) throws Exception {
+    public static void saveEvaluation(FileWriter writer, double[] mk, double[] weka) throws Exception {
         for (double v : mk) {
             System.out.println("MK: " + v);
             writer.append(String.valueOf(v));

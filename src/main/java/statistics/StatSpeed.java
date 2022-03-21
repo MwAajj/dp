@@ -53,7 +53,7 @@ public class StatSpeed {
 
     private static final int classIndex = 0;
 
-    private static final int instancesSize = 10_000;
+    private static int instancesSize = 10_000;
     private static final int instancesSizeK = 2_000;
 
     private static final int ABOVE_BORDER = Integer.MAX_VALUE;
@@ -88,7 +88,7 @@ public class StatSpeed {
             {
                     "Covid_I",
                     "Diabetes",
-                    "EMG",
+                    "Cardio",
                     "Gender",
                     "IRIS",
                     "Maternal",
@@ -100,7 +100,10 @@ public class StatSpeed {
         type = "_neighbour_";
         if (statBuild)
             type = "_build_";
-        resultFile = new FileWriter("src/main/resources/files/statistics/stat_results" + type + ".csv");
+        if(isRandom)
+            resultFile = new FileWriter("src/main/resources/files/statistics/stat_results" + type + "_random.csv");
+        else
+            resultFile = new FileWriter("src/main/resources/files/statistics/stat_results" + type + "datasets.csv");
         if (!isRandom) {
             for (String file : files) {
                 System.out.println("file: " + file);
@@ -127,6 +130,8 @@ public class StatSpeed {
                 System.out.println(i);
                 rand = new Random(i);
                 if (isRandom) {
+                    if(statBuild)
+                        instancesSize = neighboursK;
                     baseInstances = new Instances("Test", getAttr(), attrSize);
                     setInstances();
                 }
