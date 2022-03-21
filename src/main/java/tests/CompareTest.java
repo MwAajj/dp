@@ -19,31 +19,31 @@ import java.util.Random;
 
 public class CompareTest {
     private static Random rand;
-    private static final int randomSize = 1_000;
+    private static final int RANDOM_SIZE = 1_000;
 
-    private static final int attrSize = 5;
-    private static final int neighboursK = 11;
-    private static final int classIndex = 0;
+    private static final int ATTR_SIZE = 5;
+    private static final int NEIGHBOURS_K = 11;
+    private static final int CLASS_INDEX = 0;
 
-    private static final int instancesSize = 1_000;
-    private static final int instancesSizeK = 2_00;
+    private static final int INSTANCES_SIZE = 1_000;
+    private static final int INSTANCES_SIZE_K = 2_00;
 
     public static final int ABOVE_BORDER = Integer.MAX_VALUE;
     public static final int BOTTOM_BORDER = 0;
 
     private static Instances baseInstances;
-    private static DistInst[][] bruteForceInstances = new DistInst[instancesSizeK][neighboursK];
-    private static DistInst[][] kdInstances = new DistInst[instancesSizeK][neighboursK];
-    private static DistInst[][] ballInstances = new DistInst[instancesSizeK][neighboursK];
+    private static DistInst[][] bruteForceInstances = new DistInst[INSTANCES_SIZE_K][NEIGHBOURS_K];
+    private static DistInst[][] kdInstances = new DistInst[INSTANCES_SIZE_K][NEIGHBOURS_K];
+    private static DistInst[][] ballInstances = new DistInst[INSTANCES_SIZE_K][NEIGHBOURS_K];
 
     private static final double THRESHOLD = 0.000001d;
 
     public static void main(String[] args) throws Exception {
-        for (int i = 0; i < randomSize; i++) {
-            bruteForceInstances = new DistInst[instancesSizeK][neighboursK];
-            kdInstances = new DistInst[instancesSizeK][neighboursK];
-            ballInstances = new DistInst[instancesSizeK][neighboursK];
-            baseInstances = new Instances("Test", getAttr(), attrSize);
+        for (int i = 0; i < RANDOM_SIZE; i++) {
+            bruteForceInstances = new DistInst[INSTANCES_SIZE_K][NEIGHBOURS_K];
+            kdInstances = new DistInst[INSTANCES_SIZE_K][NEIGHBOURS_K];
+            ballInstances = new DistInst[INSTANCES_SIZE_K][NEIGHBOURS_K];
+            baseInstances = new Instances("Test", getAttr(), ATTR_SIZE);
             System.out.println(i);
             rand = new Random(i);
             setInstances();
@@ -52,12 +52,11 @@ public class CompareTest {
             ballTree();
             sort();
             compare();
-            System.out.println();
         }
     }
 
     private static void sort() {
-        for (int i = 0; i < instancesSizeK; i++) {
+        for (int i = 0; i < INSTANCES_SIZE_K; i++) {
             Arrays.sort(bruteForceInstances[i], Collections.reverseOrder());
             Arrays.sort(kdInstances[i], Collections.reverseOrder());
             Arrays.sort(ballInstances[i], Collections.reverseOrder());
@@ -65,8 +64,8 @@ public class CompareTest {
     }
 
     private static void compare() {
-        for (int i = 0; i < instancesSizeK; i++) {
-            for (int j = 0; j < neighboursK; j++) {
+        for (int i = 0; i < INSTANCES_SIZE_K; i++) {
+            for (int j = 0; j < NEIGHBOURS_K; j++) {
                 //threshold because of comparing doubles for test purposes
                 if (Math.abs(bruteForceInstances[i][j].getDistance() - kdInstances[i][j].getDistance()) > THRESHOLD) {
                     throw new RuntimeException("Kd mistake");
@@ -79,16 +78,16 @@ public class CompareTest {
     }
 
     private static void test(NearestNeighbourSearch structure, int x) throws Exception {
-        for (int a = 0; a < instancesSizeK; a++) {
+        for (int a = 0; a < INSTANCES_SIZE_K; a++) {
             Instance instance = baseInstances.get(a);
-            Instances instances = structure.kNearestNeighbours(instance, neighboursK);
+            Instances instances = structure.kNearestNeighbours(instance, NEIGHBOURS_K);
             double[] distances = structure.getDistances();
             addInstances(x, a, instances, distances);
         }
     }
 
     private static void addInstances(int x, int a, Instances instances, double[] distances) {
-        for (int i = 0; i < neighboursK; i++) {
+        for (int i = 0; i < NEIGHBOURS_K; i++) {
             if (x == 0)
                 bruteForceInstances[a][i] = new DistInst(instances.get(i), distances[i]);
             if (x == 1)
@@ -119,20 +118,20 @@ public class CompareTest {
 
 
     private static void setInstances() {
-        for (int m = 0; m < instancesSize; m++) {
-            double[] values = new double[attrSize];
-            for (int n = 0; n < attrSize; n++) {
+        for (int m = 0; m < INSTANCES_SIZE; m++) {
+            double[] values = new double[ATTR_SIZE];
+            for (int n = 0; n < ATTR_SIZE; n++) {
                 int val = BOTTOM_BORDER + rand.nextInt(ABOVE_BORDER - BOTTOM_BORDER);
                 values[n] = val;
             }
             baseInstances.add(new DenseInstance(1d, values));
         }
-        baseInstances.setClassIndex(classIndex);
+        baseInstances.setClassIndex(CLASS_INDEX);
     }
 
     private static ArrayList<Attribute> getAttr() {
-        ArrayList<Attribute> attr = new ArrayList<>(attrSize);
-        for (int i = 0; i < attrSize; i++) {
+        ArrayList<Attribute> attr = new ArrayList<>(ATTR_SIZE);
+        for (int i = 0; i < ATTR_SIZE; i++) {
             Attribute x = new Attribute(String.valueOf(i), i);
             attr.add(x);
         }

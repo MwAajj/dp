@@ -53,7 +53,7 @@ public class EvaluationManager {
         infoData = new double[INFO_SIZE];
         Evaluation evaluation = new Evaluation(test);
         evaluation.evaluateModel(classifier, test);
-        //System.out.println(evaluation.toSummaryString());
+
 
         confusionMatrix = new ConfusionMatrix(results);
         confusionMatrix.addPredictions(evaluation.predictions());
@@ -70,7 +70,6 @@ public class EvaluationManager {
     }
 
     public void infoPrint() {
-        //System.out.println(confusionMatrix);
         for (int i = 0; i < infoData.length; i++) {
             System.out.println(infoName[i] + infoData[i]);
         }

@@ -8,8 +8,8 @@ import weka.core.Instances;
 import java.io.Serializable;
 
 public interface Variant extends Serializable {
-    double[] distributionForInstance(Instance instance, int m_NumClasses);
-    double classifyInstance(Instance instance, int m_NumClasses);
+    double[] distributionForInstance(Instance instance, int mNumberClasses);
+    double classifyInstance(Instance instance, int mNumberClasses);
     String getOption();
     void sortInstances(Instances instances,  double[] distances);
 

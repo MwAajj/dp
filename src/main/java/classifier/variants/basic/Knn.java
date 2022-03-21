@@ -20,8 +20,8 @@ public class Knn implements Variant {
     }
 
     @Override
-    public double[] distributionForInstance(Instance instance, int m_NumClasses) {
-        double[] result = new double[m_NumClasses];
+    public double[] distributionForInstance(Instance instance, int mNumberClasses) {
+        double[] result = new double[mNumberClasses];
         Instances kNearestNeighbours = structure.findKNearestNeighbours(instance, k);
         double[] distances = structure.getDistances();
         double total = 0d;
@@ -34,7 +34,7 @@ public class Knn implements Variant {
             total++;
         }
         for (int i = 0; i < result.length; i++) {
-            result[i] = result[i] / total;
+            result[i] = result[i] / (total + 0.00001d);
         }
         return result;
     }
@@ -55,7 +55,7 @@ public class Knn implements Variant {
     }
 
     @Override
-    public double classifyInstance(Instance instance, int m_NumClasses) {
+    public double classifyInstance(Instance instance, int mNumberClasses) {
         Instances instances = structure.findKNearestNeighbours(instance, k);
         Map<Double, Integer> occurrences = getOccurrences(instances);
         int max = Integer.MIN_VALUE;
@@ -82,7 +82,7 @@ public class Knn implements Variant {
             try {
                 val = instance.classValue();
             } catch (Exception E) {
-                throw new Error("Data has no class attribute!");
+                throw new RuntimeException("Data has no class attribute!");
             }
             Integer count = occurrences.get(val);
             occurrences.put(val, count != null ? count + 1 : 1);

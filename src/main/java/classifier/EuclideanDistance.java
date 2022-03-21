@@ -10,7 +10,7 @@ import java.io.Serializable;
 import java.util.Enumeration;
 
 public class EuclideanDistance implements DistanceFunction, Serializable {
-
+    private Instances instances;
 
     @Override
     public double distance(Instance first, Instance second) {
@@ -32,12 +32,12 @@ public class EuclideanDistance implements DistanceFunction, Serializable {
 
     @Override
     public void setInstances(Instances insts) {
-
+        instances = insts;
     }
 
     @Override
     public Instances getInstances() {
-        return null;
+        return instances;
     }
 
     @Override
@@ -83,7 +83,7 @@ public class EuclideanDistance implements DistanceFunction, Serializable {
 
     @Override
     public void update(Instance ins) {
-
+        instances.add(ins);
     }
 
     @Override

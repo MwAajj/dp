@@ -114,7 +114,7 @@ public class KdTree extends NearestNeighbourSearch implements Structure {
             Instances[] arr = splitInstances(node.getInstances(), node.getInstance(), level);
             Instances leftInstances = arr[0];
             Instances rightInstances = arr[1];
-            if (leftInstances.size() > 0) {
+            if (!leftInstances.isEmpty()) {
                 level = getNewLevel(node);
                 Instance leftInstance = getMedianInstance(leftInstances, level);
                 node.setLeftSon(new KdTreeNode(leftInstance));
@@ -123,7 +123,7 @@ public class KdTree extends NearestNeighbourSearch implements Structure {
                 nodeQueue.add(node.getLeftSon());
             }
 
-            if (rightInstances.size() > 0) {
+            if (!rightInstances.isEmpty()) {
                 level = getNewLevel(node);
                 Instance rightInstance = getMedianInstance(rightInstances, level);
                 node.setRightSon(new KdTreeNode(rightInstance));
@@ -140,8 +140,7 @@ public class KdTree extends NearestNeighbourSearch implements Structure {
         double[] v = new double[data.numAttributes()];
         for (int i = 0; i < data.numAttributes(); i++) {
             if (data.attribute(i).isNumeric()) {
-                double variance = data.variance(i);
-                v[i] = variance;
+                v[i] = data.variance(i);
             } else {
                 v[i] = Double.MIN_VALUE;
             }
@@ -262,8 +261,8 @@ public class KdTree extends NearestNeighbourSearch implements Structure {
 
     private Instances[] splitInstances(Instances nodeInstances, Instance medianInstance, int level) {
         Instances[] arrInstances = new Instances[2];
-        int NODES_SIZE = 2;
-        for (int i = 0; i < NODES_SIZE; i++) {
+        int nodesSize = 2;
+        for (int i = 0; i < nodesSize; i++) {
             arrInstances[i] = new Instances(String.valueOf(i), getALlAttributes(root.getInstance()), 2);
         }
         boolean setMedium = false;
@@ -319,7 +318,7 @@ public class KdTree extends NearestNeighbourSearch implements Structure {
         } catch (Exception e) {
             throw new RuntimeException("Instances doesn't have class index");
         }
-        if (data.size() == 0)
+        if (data.isEmpty())
             throw new RuntimeException("No data in instances");
     }
 

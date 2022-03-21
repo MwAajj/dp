@@ -50,13 +50,13 @@ public class BallTree extends NearestNeighbourSearch implements Structure {
             Instances left = new Instances("left", getALlAttributes(data.firstInstance()), 0);
             Instances right = new Instances("right", getALlAttributes(data.firstInstance()), 0);
             splitInstances(left, right, data);
-            if (left.size() > 0) {
+            if (!left.isEmpty()) {
                 BallTreeNode leftNode = returnNode(left);
                 node.setLeftSon(leftNode);
                 if (left.size() > k) //else node is leaf
                     nodeQueue.add(leftNode);
             }
-            if (right.size() > 0) {
+            if (!right.isEmpty()) {
                 BallTreeNode rightNode = returnNode(right);
                 node.setRightSon(rightNode);
                 if (right.size() > k) //else node is leaf
@@ -84,7 +84,10 @@ public class BallTree extends NearestNeighbourSearch implements Structure {
         queue = new PriorityQueue<>(k);
         Stack<BallTreeNode> stack = new Stack<>();
         Stack<Son> visited = new Stack<>();
-        double left, right, d1, d2;
+        double left;
+        double right;
+        double d1;
+        double d2;
         while (!stack.isEmpty() || node != null) {
             if (node != null) {
                 stack.push(node);
@@ -161,9 +164,10 @@ public class BallTree extends NearestNeighbourSearch implements Structure {
     }
 
     private void processLeaf(BallTreeNode node, PriorityQueue<DistInst> queue, Instance target, int k) {
-        double d3, d4;
-        if (node.getInstances().size() == 0)
-            System.out.println("Unexpected processLeaf");
+        double d3;
+        double d4;
+        if (node.getInstances().isEmpty())
+            throw new RuntimeException("Unexpected processLeaf");
         for (int i = 0; i < node.getInstances().size(); i++) {
             d3 = function.distance(target, node.getInstances().get(i));
             if (queue.isEmpty())
@@ -185,7 +189,8 @@ public class BallTree extends NearestNeighbourSearch implements Structure {
     public Instance nearestNeighbour(Instance target) {
         queue = new PriorityQueue<>(1);
         BallTreeNode node = this.root;
-        double left, right;
+        double left;
+        double right;
         while (true) {
             if (node.isLeaf()) {
                 double min = Double.MAX_VALUE;
@@ -238,7 +243,8 @@ public class BallTree extends NearestNeighbourSearch implements Structure {
             return;
         }
         BallTreeNode node = root;
-        double leftDistance, rightDistance;
+        double leftDistance;
+        double rightDistance;
         while (true) {
             if (node.isLeaf()) {
                 if (!node.isInstances())
@@ -254,10 +260,10 @@ public class BallTree extends NearestNeighbourSearch implements Structure {
                 Instances left = new Instances("left", getALlAttributes(instances.firstInstance()), 0);
                 Instances right = new Instances("right", getALlAttributes(instances.firstInstance()), 0);
                 splitInstances(left, right, instances);
-                if (left.size() > 0) {
+                if (!left.isEmpty()) {
                     node.setLeftSon(returnNode(left));
                 }
-                if (right.size() > 0) {
+                if (!right.isEmpty()) {
                     node.setRightSon(returnNode(right));
                 }
                 return;
@@ -367,14 +373,14 @@ public class BallTree extends NearestNeighbourSearch implements Structure {
         return new DenseInstance(1d, values);
     }
 
-    private Instance getFarthestDistance(Instances data, Instance p_instance) {
+    private Instance getFarthestDistance(Instances data, Instance firstInstance) {
         Instance instance = null;
         double max = -Double.MIN_VALUE;
         for (Instance inst : data) {
-            if (inst == p_instance)
+            if (inst == firstInstance)
                 continue;
-            double d2 = function.distance(inst, p_instance);
-            double d1 = function.distance(p_instance, inst);
+            double d2 = function.distance(inst, firstInstance);
+            double d1 = function.distance(firstInstance, inst);
             double distance = Math.max(d2, d1); // note
             if (max < distance) {
                 instance = inst;
