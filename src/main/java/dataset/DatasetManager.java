@@ -37,8 +37,7 @@ public class DatasetManager {
             loader.setSource(new File(file));
             instances = loader.getDataSet();
         } catch (Exception e) {
-            System.err.println("Exception" + e);
-            throw new RuntimeException(e);
+            throw new RuntimeException("Exception" + file + "_ " + e);
         }
         if (index == -1)
             index = instances.numAttributes() - 1;
