@@ -5,8 +5,6 @@ import lombok.Getter;
 import weka.core.*;
 import weka.core.converters.ConverterUtils.DataSource;
 
-import java.util.ArrayList;
-
 
 @Getter
 @AllArgsConstructor
@@ -20,34 +18,26 @@ public class InstanceManager {
     private static final String PATH = "src/main/resources/files/";
     private static final String ARFF_SUFFIX = ".arff";
 
-    public InstanceManager() {
+    public InstanceManager(String pFileName) {
         classIndex = -1;
         percentage = -1d;
-        fileName = "heart";
+        fileName = pFileName;
         process();
 
     }
 
-    public InstanceManager(String p_fileName) {
-        classIndex = -1;
-        percentage = -1d;
-        fileName = p_fileName;
-        process();
-
-    }
-
-    public InstanceManager(String p_fileName, int classIndex) {
+    public InstanceManager(String pFileName, int classIndex) {
         this.classIndex = classIndex;
-        fileName = p_fileName;
+        fileName = pFileName;
         percentage = -1d;
         process();
     }
 
 
-    public InstanceManager(String p_fileName, int classIndex, double percentage) {
+    public InstanceManager(String pFileName, int classIndex, double percentage) {
         this.classIndex = classIndex;
         this.percentage = percentage;
-        fileName = p_fileName;
+        fileName = pFileName;
         process();
     }
 
@@ -60,20 +50,13 @@ public class InstanceManager {
             source = new DataSource(filePath);
             all = source.getDataSet();
         } catch (Exception e) {
-            System.err.println("File was not found " + filePath);
-            throw new RuntimeException();
+            throw new RuntimeException("File was not found " + filePath);
         }
-
-        //System.out.println(all.toSummaryString());
 
         classIndex = classIndex == -1 ? all.numAttributes() - 1 : classIndex;
 
         all.setClassIndex(classIndex);
 
-        //randomize order of records in my input dataset
-        //all.randomize(new Random(23));
-
-        //how much data in dataset, e.g. 80 percent
         percentage = percentage == -1d ? 0.80d : percentage;
 
         int trainSize = (int) Math.round(all.numInstances() * percentage);
@@ -81,31 +64,9 @@ public class InstanceManager {
 
         //from 0 to train size are train instances
         train = new Instances(all, 0, trainSize);
-
+        train.setClassIndex(classIndex);
         //from train size to test size are test instances
         test = new Instances(all, trainSize, testSize);
-    }
-
-
-    public Instances getNewInstance(double[] data) {
-        Instances newInstances = new Instances(
-                "Target",
-                getALlAttributes(),
-                2
-        );
-        newInstances.add(new DenseInstance(1d, data));
-        return newInstances;
-    }
-
-    public ArrayList<Attribute> getALlAttributes() {
-        ArrayList<Attribute> attr = new ArrayList<>();
-        for (int i = 0; i < all.numAttributes(); i++) {
-            attr.add(all.firstInstance().attribute(i));
-        }
-        return attr;
-    }
-
-    public void printInstances() {
-        System.out.println(all.toString());
+        test.setClassIndex(classIndex);
     }
 }

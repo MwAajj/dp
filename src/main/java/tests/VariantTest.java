@@ -1,12 +1,10 @@
 package tests;
 
+import classifier.EuclideanDistance;
 import classifier.MyAlgorithm;
 import weka.classifiers.Classifier;
 import weka.classifiers.lazy.IBk;
-import weka.core.Attribute;
-import weka.core.DenseInstance;
-import weka.core.Instance;
-import weka.core.Instances;
+import weka.core.*;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -54,23 +52,26 @@ public class VariantTest {
         attr.add(y);
         attr.add(z);
 
-        Instances inst = new Instances("hmd", attr, 6);
-        inst.add(new DenseInstance(1d, new double[]{1, 2, 1}));
-        inst.add(new DenseInstance(1d, new double[]{1, 3, 1}));
-        inst.add(new DenseInstance(1d, new double[]{10, 9, 1}));
-        inst.add(new DenseInstance(1d, new double[]{8, 7, 1}));
-        inst.add(new DenseInstance(1d, new double[]{9, 9, 1}));
-        inst.add(new DenseInstance(1d, new double[]{555, 444, 0}));
+        Instances inst = new Instances("hmd", attr, 10);
+        inst.add(new DenseInstance(1d, new double[]{2, 1, 0}));
+        inst.add(new DenseInstance(1d, new double[]{7, 4, 0}));
+        inst.add(new DenseInstance(1d, new double[]{6, 1, 0}));
+        inst.add(new DenseInstance(1d, new double[]{6, 5, 1}));
+        inst.add(new DenseInstance(1d, new double[]{2, 2, 0}));
+        inst.add(new DenseInstance(1d, new double[]{2, 4, 0}));
+        inst.add(new DenseInstance(1d, new double[]{3, 5, 1}));
+        inst.add(new DenseInstance(1d, new double[]{7, 2, 1}));
         inst.setClassIndex(2);
 
         Instances nn = new Instances("nn", attr, 6);
-        Instance target = new DenseInstance(1d, new double[]{6, 6, 0});
+        Instance target = new DenseInstance(1d, new double[]{5, 2, 1});
         nn.add(target);
         nn.setClassIndex(2);
 
 
         MyAlgorithm cc = new MyAlgorithm();
-        options = new String[]{"-K", "5", "-H"};
+        options = new String[]{"-K", "3", "-H"};
+        cc.setMDistanceFunction(new EuclideanDistance());
         cc.setOptions(options);
         cc.buildClassifier(inst);
 

@@ -15,6 +15,7 @@ import classifier.structure.trees.kdtree.KdTree;
 import weka.classifiers.AbstractClassifier;
 import weka.classifiers.Classifier;
 import weka.core.*;
+import weka.core.EuclideanDistance;
 
 import java.util.*;
 
@@ -23,11 +24,16 @@ import java.util.*;
 @NoArgsConstructor
 public class MyAlgorithm extends AbstractClassifier implements Classifier, OptionHandler {
     private Variant variant;
-    private int m_NumClasses = 0;
-    private boolean mk_variance = false;
+    private int mNumberClasses = 0;
+    private boolean mkVariance = false;
     private int k = 1;
     private Structure structure;
-    private DistanceFunction m_distanceFunction;
+    private DistanceFunction mDistanceFunction;
+
+    public MyAlgorithm(int k, Instances data) {
+        this.k = k;
+        buildClassifier(data);
+    }
 
     public MyAlgorithm(int k) {
         this.k = k;
@@ -36,23 +42,29 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
     @Override
     public void buildClassifier(Instances data) {
         checkData(data);
-        m_NumClasses = data.numDistinctValues(data.classIndex());
-        if (m_distanceFunction == null) m_distanceFunction = new EuclideanDistance();
+        mNumberClasses = data.numDistinctValues(data.classIndex());
+        if (mDistanceFunction == null) mDistanceFunction = new EuclideanDistance();
         if (structure == null) structure = new BallTree(k);
-        structure.setDistanceFunction(m_distanceFunction);
+        if (variant == null) variant = new Knn(structure, k);
+        mDistanceFunction.setInstances(data);
+        structure.setDistanceFunction(mDistanceFunction);
         structure.buildStructure(data);
     }
 
     //return end class of new instance
     @Override
     public double classifyInstance(Instance instance) {
-        return variant.classifyInstance(instance, m_NumClasses);
+        if (variant instanceof HarmonicKnn)
+            ((HarmonicKnn) variant).setMDistanceFunction(mDistanceFunction);
+        return variant.classifyInstance(instance, mNumberClasses);
     }
 
     //return probabilities for each class of new instance
     @Override
     public double[] distributionForInstance(Instance instance) {
-        return variant.distributionForInstance(instance, m_NumClasses);
+        if (variant instanceof HarmonicKnn)
+            ((HarmonicKnn) variant).setMDistanceFunction(mDistanceFunction);
+        return variant.distributionForInstance(instance, mNumberClasses);
     }
 
     @Override
@@ -69,11 +81,11 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
             setK(Integer.parseInt(knnString));
         }
         if (Utils.getFlag('V', options))
-            mk_variance = true;
+            mkVariance = true;
         if (Utils.getFlag('B', options))
             structure = new BallTree(k);
         else if (Utils.getFlag('D', options))
-            structure = new KdTree(mk_variance);
+            structure = new KdTree(mkVariance);
         else
             structure = new BruteForce();
         if (Utils.getFlag('H', options)) {
@@ -89,11 +101,13 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
 
     @Override
     public String[] getOptions() {
-        Vector<String> options = new Vector<>();
+        ArrayList<String> options = new ArrayList<>();
         Collections.addAll(options, super.getOptions());
         options.add("-K");
         options.add("" + getK());
         options.add(variant.getOption());
+        options.add(structure.getOption());
+        if(mkVariance) options.add("-V");
         return options.toArray(new String[0]);
     }
 

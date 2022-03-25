@@ -1,7 +1,6 @@
 package classifier.structure.trees.kdtree;
 
 
-import classifier.EuclideanDistance;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import classifier.structure.Structure;
@@ -14,7 +13,7 @@ import java.util.*;
 
 public class KdTree extends NearestNeighbourSearch implements Structure {
     private final boolean variance;
-    private DistanceFunction function = new EuclideanDistance();
+    private DistanceFunction distanceFunction = new EuclideanDistance();
     private int numInst = -1;
     private KdTreeNode root = null;
     PriorityQueue<DistInst> queue;
@@ -31,7 +30,7 @@ public class KdTree extends NearestNeighbourSearch implements Structure {
 
     @Override
     public void setDistanceFunction(DistanceFunction distanceFunction) {
-        function = distanceFunction;
+        this.distanceFunction = distanceFunction;
     }
 
     @Override
@@ -53,6 +52,11 @@ public class KdTree extends NearestNeighbourSearch implements Structure {
             i++;
         }
         return distances;
+    }
+
+    @Override
+    public String getOption() {
+        return "-D";
     }
 
     /*Add instance to kdTree*/
@@ -95,6 +99,7 @@ public class KdTree extends NearestNeighbourSearch implements Structure {
     public void buildStructure(Instances data) {
         checkData(data);
         numInst = data.size();
+        distanceFunction.setInstances(data);
         if (!variance) indices = getIndices(data.firstInstance());
         else indices = getVariance(data);
         Queue<KdTreeNode> nodeQueue = new LinkedList<>();
@@ -114,7 +119,7 @@ public class KdTree extends NearestNeighbourSearch implements Structure {
             Instances[] arr = splitInstances(node.getInstances(), node.getInstance(), level);
             Instances leftInstances = arr[0];
             Instances rightInstances = arr[1];
-            if (leftInstances.size() > 0) {
+            if (!leftInstances.isEmpty()) {
                 level = getNewLevel(node);
                 Instance leftInstance = getMedianInstance(leftInstances, level);
                 node.setLeftSon(new KdTreeNode(leftInstance));
@@ -123,7 +128,7 @@ public class KdTree extends NearestNeighbourSearch implements Structure {
                 nodeQueue.add(node.getLeftSon());
             }
 
-            if (rightInstances.size() > 0) {
+            if (!rightInstances.isEmpty()) {
                 level = getNewLevel(node);
                 Instance rightInstance = getMedianInstance(rightInstances, level);
                 node.setRightSon(new KdTreeNode(rightInstance));
@@ -140,8 +145,7 @@ public class KdTree extends NearestNeighbourSearch implements Structure {
         double[] v = new double[data.numAttributes()];
         for (int i = 0; i < data.numAttributes(); i++) {
             if (data.attribute(i).isNumeric()) {
-                double variance = data.variance(i);
-                v[i] = variance;
+                v[i] = data.variance(i);
             } else {
                 v[i] = Double.MIN_VALUE;
             }
@@ -191,8 +195,8 @@ public class KdTree extends NearestNeighbourSearch implements Structure {
     public Instances findKNearestNeighbours(Instance target, int k) {
         checkData(k);
         queue = new PriorityQueue<>();
-        Stack<KdTreeNode> stack = new Stack<>();
-        Stack<Son> visited = new Stack<>();
+        Deque<KdTreeNode> stack = new ArrayDeque<>();
+        Deque<Son> visited = new ArrayDeque<>();
         KdTreeNode node = this.root;
         int level;
         double distance;
@@ -201,9 +205,9 @@ public class KdTree extends NearestNeighbourSearch implements Structure {
             if (node != null) {
                 stack.push(node);
                 level = node.getLevel();
-                distance = function.distance(node.getInstance(), target);
+                distance = distanceFunction.distance(node.getInstance(), target);
                 double max = queue.isEmpty() || queue.size() < k ? Double.MAX_VALUE
-                        : function.distance(target, queue.peek().getInstance());
+                        : distanceFunction.distance(target, queue.peek().getInstance());
                 if (distance < max) {
                     queue.add(new DistInst(node.getInstance(), distance));
                     if (queue.size() > k)
@@ -262,8 +266,8 @@ public class KdTree extends NearestNeighbourSearch implements Structure {
 
     private Instances[] splitInstances(Instances nodeInstances, Instance medianInstance, int level) {
         Instances[] arrInstances = new Instances[2];
-        int NODES_SIZE = 2;
-        for (int i = 0; i < NODES_SIZE; i++) {
+        int nodesSize = 2;
+        for (int i = 0; i < nodesSize; i++) {
             arrInstances[i] = new Instances(String.valueOf(i), getALlAttributes(root.getInstance()), 2);
         }
         boolean setMedium = false;
@@ -295,7 +299,11 @@ public class KdTree extends NearestNeighbourSearch implements Structure {
     private double axisDistance(Instance pInstance, KdTreeNode node) {
         int level = node.getLevel();
         //for another axis 0 because we measure distance to section not to point
-        return Math.sqrt(Math.pow(pInstance.value(level) - node.getInstance().value(level), 2d));
+        if (m_DistanceFunction instanceof classifier.EuclideanDistance)
+            return Math.sqrt(Math.pow(pInstance.value(level) - node.getInstance().value(level), 2d));
+        Instance inst = new DenseInstance(pInstance);
+        inst.setValue(level, node.getInstance().value(level));
+        return distanceFunction.distance(pInstance, inst);
     }
 
     @Override
@@ -319,7 +327,7 @@ public class KdTree extends NearestNeighbourSearch implements Structure {
         } catch (Exception e) {
             throw new RuntimeException("Instances doesn't have class index");
         }
-        if (data.size() == 0)
+        if (data.isEmpty())
             throw new RuntimeException("No data in instances");
     }
 

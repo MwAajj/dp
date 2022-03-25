@@ -18,6 +18,7 @@ public class HarmonicKnn implements Variant {
     Map<Double, Double> info = new HashMap<>();
     private int m;
     private int k;
+    private DistanceFunction mDistanceFunction;
 
     public HarmonicKnn(Structure structure, int k) {
         this.structure = structure;
@@ -25,17 +26,18 @@ public class HarmonicKnn implements Variant {
     }
 
     @Override
-    public double[] distributionForInstance(Instance instance, int m_NumClasses) {
-        double[] x = HmdKnnAlg(instance, m_NumClasses);
+    public double[] distributionForInstance(Instance instance, int mNumberClasses) {
+        double[] x = hmdKnnAlg(instance, mNumberClasses);
         Utils.normalize(x);
         return x;
     }
 
 
     @Override
-    public double classifyInstance(Instance target, int m_NumClasses) {
-        double min = Double.MAX_VALUE, endClass = 0d;
-        double[] meanDistances = HmdKnnAlg(target, m_NumClasses);
+    public double classifyInstance(Instance target, int mNumberClasses) {
+        double min = Double.MAX_VALUE;
+        double endClass = 0d;
+        double[] meanDistances = hmdKnnAlg(target, mNumberClasses);
         for (int i = 0; i < meanDistances.length; i++) {
             if (meanDistances[i] < min) {
                 min = meanDistances[i];
@@ -50,21 +52,22 @@ public class HarmonicKnn implements Variant {
         return "-H";
     }
 
-    private double[] HmdKnnAlg(Instance target, int m_NumClasses) {
-        this.m = m_NumClasses;
+    private double[] hmdKnnAlg(Instance target, int mNumberClasses) {
+        this.m = mNumberClasses;
         this.neighbours = structure.findKNearestNeighbours(target, k);
         this.distances = structure.getDistances();
+        mDistanceFunction.setInstances(this.neighbours);
         sortInstances(neighbours, distances); //1
         Instances meanInstances = getMeanInstances(neighbours); //2
-        double[] harmonicMeanDistances = getHarmonicMeanDistances(target, meanInstances, neighbours);
-        return getResult(harmonicMeanDistances, neighbours);
+        double[] harmonicMeanDistances = getHarmonicMeanDistances(target, meanInstances);
+        return getResult(harmonicMeanDistances);
     }
 
     public void sortInstances(Instances neighbours, double[] distances) {
         Knn.sortNearestInstances(neighbours, distances);
     }
 
-    private double[] getResult(double[] harmonicMeanDistances, Instances neighbours) {
+    private double[] getResult(double[] harmonicMeanDistances) {
         double[] sum = new double[m];
         Arrays.fill(sum, 0d);
         for (int i = 0; i < harmonicMeanDistances.length; i++) {
@@ -76,11 +79,11 @@ public class HarmonicKnn implements Variant {
         return sum;
     }
 
-    private double[] getHarmonicMeanDistances(Instance target, Instances meanVectors, Instances neighbours) {
+    private double[] getHarmonicMeanDistances(Instance target, Instances meanVectors) {
         double[] harmonicMeanDistances = new double[m];
         double[] denominator = new double[m];
         for (int i = 0; i < m; i++) {
-            double distance = euclidDistance(target, meanVectors.get(i));
+            double distance = mDistanceFunction.distance(target, meanVectors.get(i));
             denominator[i] += distance;
         }
         for (int i = 0; i < m; i++) {
@@ -118,27 +121,5 @@ public class HarmonicKnn implements Variant {
             attr.add(instance.attribute(i));
         }
         return attr;
-    }
-
-    public double euclidDistance(Instance first, Instance second) {
-        if (first.numAttributes() != second.numAttributes()) {
-            throw new RuntimeException("CalculateDistance: Incompatible size of instances");
-        }
-        double sum = 0;
-        for (int i = 0; i < first.numAttributes(); i++) {
-            double value = first.value(i);
-            double value1 = second.value(i);
-            double x = value - value1;
-            if (Double.isNaN(x))
-                continue;
-            sum += Math.pow(x, 2);
-        }
-        return Math.sqrt(sum);
-    }
-
-    private void printInfo() {
-        System.out.println("\n--------------------HMD-KNN------------");
-        System.out.println(info);
-        System.out.println("-------------------------------------");
     }
 }

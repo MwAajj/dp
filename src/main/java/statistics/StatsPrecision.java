@@ -5,15 +5,17 @@ import dataset.DatasetManager;
 import evaluation.EvaluationManager;
 import instance.InstanceManager;
 import weka.classifiers.lazy.IBk;
+import weka.core.DistanceFunction;
 import weka.core.EuclideanDistance;
 import weka.core.Instances;
 import weka.core.neighboursearch.BallTree;
 
 import java.io.FileWriter;
+import java.io.IOException;
 
 public class StatsPrecision {
-    private final static int random_size = 10;
-    private final static String[] files = {
+    private static final int RANDOM_SIZE = 10;
+    private static final String[] files = {
             "Covid_I",
             "Diabetes",
             "Cardio",
@@ -21,7 +23,7 @@ public class StatsPrecision {
             "IRIS",
             "Maternal"
     };
-    private final static String[][] classOptions = {
+    private static final String[][] classOptions = {
             {"healthy", "ill"},
             {"healthy", "ill"},
             {"normal", "suspect", "pathologic"},
@@ -30,7 +32,11 @@ public class StatsPrecision {
             {"high risk", "low risk", "mid risk"}
     };
 
-    private final static int[] kVariables = {3, 7, 11};
+    private static final DistanceFunction M_DISTANCE_FUNCTION = new classifier.EuclideanDistance(); //MK
+
+    //private static final DistanceFunction M_DISTANCE_FUNCTION = new EuclideanDistance();        //WEKA
+
+    private static final int[] kVariables = {3, 7, 11};
 
     public static void main(String[] args) throws Exception {
         //test();
@@ -48,6 +54,14 @@ public class StatsPrecision {
                 String newFilename;
                 newFilename = fileName + "_" + k;
                 String[][] myOptions = {
+                        /*{"-K", String.valueOf(k)},
+                        {"-K", String.valueOf(k), "-W"},
+                        {"-K", String.valueOf(k), "-F", "2"},
+                        {"-K", String.valueOf(k), "-H"},
+                        {"-K", String.valueOf(k), "-D"},
+                        {"-K", String.valueOf(k), "-D", "-W"},
+                        {"-K", String.valueOf(k), "-D", "-F", "2"},
+                        {"-K", String.valueOf(k), "-D", "-H"},*/
                         {"-K", String.valueOf(k), "-B"},
                         {"-K", String.valueOf(k), "-B", "-W"},
                         {"-K", String.valueOf(k), "-B", "-F", "2"},
@@ -61,12 +75,12 @@ public class StatsPrecision {
                 };
 
 
-                double[][] sumMk = new double[random_size][myOptions.length];
-                double[][] sumWeka = new double[random_size][wekaOption.length];
+                double[][] sumMk = new double[RANDOM_SIZE][myOptions.length];
+                double[][] sumWeka = new double[RANDOM_SIZE][wekaOption.length];
 
 
                 FileWriter writer = new FileWriter("src/main/resources/files/statistics/stat" + newFilename + ".csv");
-                for (int l = 0; l < random_size; l++) {
+                for (int l = 0; l < RANDOM_SIZE; l++) {
                     EvaluationManager evaluation = new EvaluationManager(test, all, classOptions[i], l);
                     System.out.println("L: " + l);
 
@@ -74,13 +88,11 @@ public class StatsPrecision {
                         System.out.println("\t M J:" + j);
                         MyAlgorithm alg = new MyAlgorithm();
                         String[] option = myOptions[j];
+                        alg.setMDistanceFunction(M_DISTANCE_FUNCTION);
                         alg.setOptions(option);
                         alg.buildClassifier(train);
 
-
-                        //System.out.println("-----------author---------");
                         evaluation.evaluateModel(alg);
-                        //evaluation.infoPrint();
 
                         double[] infoOption = evaluation.getInfoData();
                         if (l == 0)
@@ -96,9 +108,7 @@ public class StatsPrecision {
                         String[] option = wekaOption[j];
                         weka.setOptions(option);
                         weka.buildClassifier(train);
-                        //System.out.println("\n-----------WEKA---------");
                         evaluation.evaluateModel(weka);
-                        //evaluation.infoPrint();
 
                         double[] infoDataWeka = evaluation.getInfoData();
                         if (l == 0)
@@ -108,14 +118,15 @@ public class StatsPrecision {
                     }
                     saveEvaluation(writer, sumMk[l], sumWeka[l]);
                 }
-                saveEvaluation(resultFile, sumMk[random_size - 1], sumWeka[random_size - 1]);
+                saveEvaluation(resultFile, sumMk[RANDOM_SIZE - 1], sumWeka[RANDOM_SIZE - 1]);
                 writer.close();
             }
         }
         resultFile.close();
     }
 
-    public static void saveEvaluation(FileWriter writer, double[] mk, double[] weka) throws Exception {
+
+    public static void saveEvaluation(FileWriter writer, double[] mk, double[] weka) throws IOException {
         for (double v : mk) {
             System.out.println("MK: " + v);
             writer.append(String.valueOf(v));

@@ -1,6 +1,5 @@
 package classifier.structure.basic;
 
-import classifier.EuclideanDistance;
 import classifier.structure.Structure;
 import weka.core.*;
 import weka.core.neighboursearch.NearestNeighbourSearch;
@@ -23,6 +22,7 @@ public class BruteForce extends NearestNeighbourSearch implements Structure {
     @Override
     public void buildStructure(Instances data) {
         instances = data;
+        function.setInstances(data);
         instances.setClassIndex(data.classIndex());
     }
 
@@ -95,6 +95,11 @@ public class BruteForce extends NearestNeighbourSearch implements Structure {
     @Override
     public double[] getDistances() {
         return distances;
+    }
+
+    @Override
+    public String getOption() {
+        return "";
     }
 
     @Override
