@@ -1,5 +1,6 @@
 package classifier;
 
+
 import weka.core.DistanceFunction;
 import weka.core.Instance;
 import weka.core.Instances;
@@ -9,6 +10,8 @@ import weka.core.neighboursearch.PerformanceStats;
 import java.io.Serializable;
 import java.util.Enumeration;
 
+
+/*Class for dummy calculation of euclidean distance*/
 public class EuclideanDistance implements DistanceFunction, Serializable {
     private Instances instances;
 
@@ -37,7 +40,7 @@ public class EuclideanDistance implements DistanceFunction, Serializable {
 
     @Override
     public Instances getInstances() {
-        return instances;
+        return null;
     }
 
     @Override
@@ -62,7 +65,7 @@ public class EuclideanDistance implements DistanceFunction, Serializable {
 
 
     @Override
-    public double distance(Instance first, Instance second, PerformanceStats stats)  {
+    public double distance(Instance first, Instance second, PerformanceStats stats) {
         return distance(first, second);
     }
 
@@ -97,7 +100,7 @@ public class EuclideanDistance implements DistanceFunction, Serializable {
     }
 
     @Override
-    public void setOptions(String[] options)  {
+    public void setOptions(String[] options) {
 
     }
 

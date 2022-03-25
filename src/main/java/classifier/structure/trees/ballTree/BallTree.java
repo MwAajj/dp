@@ -1,6 +1,5 @@
 package classifier.structure.trees.ballTree;
 
-import classifier.EuclideanDistance;
 import classifier.structure.Structure;
 import classifier.structure.trees.Son;
 import weka.core.*;
@@ -33,6 +32,7 @@ public class BallTree extends NearestNeighbourSearch implements Structure {
 
     @Override
     public void buildStructure(Instances data) {
+        function.setInstances(data);
         numInst = data.size();
         Queue<BallTreeNode> nodeQueue = new LinkedList<>();
         classIndex = data.classIndex();
@@ -82,8 +82,8 @@ public class BallTree extends NearestNeighbourSearch implements Structure {
         BallTreeNode node = this.root;
         Son visitedSon = null;
         queue = new PriorityQueue<>(k);
-        Stack<BallTreeNode> stack = new Stack<>();
-        Stack<Son> visited = new Stack<>();
+        Deque<BallTreeNode> stack = new ArrayDeque<>();
+        Deque<Son> visited = new ArrayDeque<>();
         double left;
         double right;
         double d1;
@@ -169,15 +169,16 @@ public class BallTree extends NearestNeighbourSearch implements Structure {
         if (node.getInstances().isEmpty())
             throw new RuntimeException("Unexpected processLeaf");
         for (int i = 0; i < node.getInstances().size(); i++) {
-            d3 = function.distance(target, node.getInstances().get(i));
+            Instance instance = node.getInstances().get(i);
+            d3 = function.distance(target, instance);
             if (queue.isEmpty())
                 d4 = Double.MAX_VALUE;
             else
                 d4 = function.distance(target, queue.peek().getInstance());
             if (queue.size() < k)
-                queue.add(new DistInst(node.getInstances().get(i), d3));
+                queue.add(new DistInst(instance, d3));
             else if (d3 < d4) {
-                queue.add(new DistInst(node.getInstances().get(i), d3));
+                queue.add(new DistInst(instance, d3));
             }
             if (queue.size() > k)
                 queue.poll();
@@ -229,6 +230,11 @@ public class BallTree extends NearestNeighbourSearch implements Structure {
             i++;
         }
         return distances;
+    }
+
+    @Override
+    public String getOption() {
+        return "-B";
     }
 
     @Override

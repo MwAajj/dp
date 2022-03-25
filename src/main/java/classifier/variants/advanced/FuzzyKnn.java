@@ -17,12 +17,12 @@ public class FuzzyKnn implements Variant {
     Map<Double, Double> info = new HashMap<>();
     private Structure structure;
     private int k;
-    private int m;
+    private int z;
 
-    public FuzzyKnn(Structure structure, int k, int m) {
+    public FuzzyKnn(Structure structure, int k, int z) {
         this.structure = structure;
         this.k = k;
-        this.m = m;
+        this.z = z;
     }
 
     @Override
@@ -31,7 +31,7 @@ public class FuzzyKnn implements Variant {
         Instances kNearestNeighbours = structure.findKNearestNeighbours(instance, k);
         double[] distances = structure.getDistances();
         sortInstances(kNearestNeighbours, distances);
-        result = fuzzyDistance2(kNearestNeighbours, distances, m, mNumberClasses);
+        result = fuzzyDistance2(kNearestNeighbours, distances, z, mNumberClasses);
         return result;
     }
 
@@ -68,7 +68,7 @@ public class FuzzyKnn implements Variant {
         double max = -1d;
 
         for (int i = 0; i < mNumberClasses; i++) {
-            double prob = fuzzyDistance(instances, distances, i, m);
+            double prob = fuzzyDistance(instances, distances, i, z);
             if (max < prob) {
                 max = prob;
                 endClass = i;
@@ -80,11 +80,11 @@ public class FuzzyKnn implements Variant {
 
     @Override
     public String getOption() {
-        return "-F";
+        return "-F-" + z;
     }
 
 
-    private double fuzzyDistance(Instances instances, double[] distances, double classValue, int m) {
+    private double fuzzyDistance(Instances instances, double[] distances, double classValue, int z) {
         double numeratorSum = 0d;
         double denominatorSum = 0d;
         double upperFraction;
@@ -92,10 +92,10 @@ public class FuzzyKnn implements Variant {
         int index = 0;
         for (Instance value : instances) {
             numerator = value.classValue() == classValue ? 1 : 0;
-            double pow = Math.pow(distances[index], m);
-            upperFraction = numerator / pow;
+            double pow = Math.pow(distances[index], z);
+            upperFraction = numerator / (pow + 0.0001d);
             numeratorSum += upperFraction;
-            denominatorSum += (1 / pow);
+            denominatorSum += (1 / (pow + 0.0001d));
             index++;
         }
         return numeratorSum / (denominatorSum + 0.00001d);

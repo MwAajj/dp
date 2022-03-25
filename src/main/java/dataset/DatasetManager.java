@@ -9,6 +9,7 @@ import weka.filters.Filter;
 import weka.filters.unsupervised.attribute.NumericToNominal;
 
 import java.io.File;
+import java.net.URL;
 
 @Getter
 public class DatasetManager {
@@ -27,6 +28,13 @@ public class DatasetManager {
         processDataset();
     }
 
+    public DatasetManager(String fileName, int classIndex) {
+        this.inputFileName = fileName;
+        this.outputFileName = fileName;
+        this.index = classIndex;
+        processDataset();
+    }
+
     public void processDataset() {
         CSVLoader loader = new CSVLoader();
         loader.setFieldSeparator(DELIMITER);
@@ -36,7 +44,7 @@ public class DatasetManager {
             loader.setSource(new File(file));
             instances = loader.getDataSet();
         } catch (Exception e) {
-            throw new RuntimeException("Exception" + file + "_ " + e);
+            throw new RuntimeException("Exception" + file + "  : " + e);
         }
         if (index == -1)
             index = instances.numAttributes() - 1;
@@ -50,7 +58,7 @@ public class DatasetManager {
             numericToNominal.setInputFormat(instances);
             processedInstances = Filter.useFilter(instances, numericToNominal);
         } catch (Exception e) {
-            throw new RuntimeException("Exception" + e);
+            throw new RuntimeException("Exception: " + e);
         }
         saveAsArff(processedInstances);
     }

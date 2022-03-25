@@ -5,6 +5,7 @@ import dataset.DatasetManager;
 import evaluation.EvaluationManager;
 import instance.InstanceManager;
 import weka.classifiers.lazy.IBk;
+import weka.core.DistanceFunction;
 import weka.core.EuclideanDistance;
 import weka.core.Instances;
 import weka.core.neighboursearch.BallTree;
@@ -31,6 +32,10 @@ public class StatsPrecision {
             {"high risk", "low risk", "mid risk"}
     };
 
+    private static final DistanceFunction M_DISTANCE_FUNCTION = new classifier.EuclideanDistance(); //MK
+
+    //private static final DistanceFunction M_DISTANCE_FUNCTION = new EuclideanDistance();        //WEKA
+
     private static final int[] kVariables = {3, 7, 11};
 
     public static void main(String[] args) throws Exception {
@@ -49,6 +54,14 @@ public class StatsPrecision {
                 String newFilename;
                 newFilename = fileName + "_" + k;
                 String[][] myOptions = {
+                        /*{"-K", String.valueOf(k)},
+                        {"-K", String.valueOf(k), "-W"},
+                        {"-K", String.valueOf(k), "-F", "2"},
+                        {"-K", String.valueOf(k), "-H"},
+                        {"-K", String.valueOf(k), "-D"},
+                        {"-K", String.valueOf(k), "-D", "-W"},
+                        {"-K", String.valueOf(k), "-D", "-F", "2"},
+                        {"-K", String.valueOf(k), "-D", "-H"},*/
                         {"-K", String.valueOf(k), "-B"},
                         {"-K", String.valueOf(k), "-B", "-W"},
                         {"-K", String.valueOf(k), "-B", "-F", "2"},
@@ -75,6 +88,7 @@ public class StatsPrecision {
                         System.out.println("\t M J:" + j);
                         MyAlgorithm alg = new MyAlgorithm();
                         String[] option = myOptions[j];
+                        alg.setMDistanceFunction(M_DISTANCE_FUNCTION);
                         alg.setOptions(option);
                         alg.buildClassifier(train);
 

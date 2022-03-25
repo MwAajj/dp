@@ -18,6 +18,7 @@ public class HarmonicKnn implements Variant {
     Map<Double, Double> info = new HashMap<>();
     private int m;
     private int k;
+    private DistanceFunction mDistanceFunction;
 
     public HarmonicKnn(Structure structure, int k) {
         this.structure = structure;
@@ -55,6 +56,7 @@ public class HarmonicKnn implements Variant {
         this.m = mNumberClasses;
         this.neighbours = structure.findKNearestNeighbours(target, k);
         this.distances = structure.getDistances();
+        mDistanceFunction.setInstances(this.neighbours);
         sortInstances(neighbours, distances); //1
         Instances meanInstances = getMeanInstances(neighbours); //2
         double[] harmonicMeanDistances = getHarmonicMeanDistances(target, meanInstances);
@@ -81,7 +83,7 @@ public class HarmonicKnn implements Variant {
         double[] harmonicMeanDistances = new double[m];
         double[] denominator = new double[m];
         for (int i = 0; i < m; i++) {
-            double distance = euclidDistance(target, meanVectors.get(i));
+            double distance = mDistanceFunction.distance(target, meanVectors.get(i));
             denominator[i] += distance;
         }
         for (int i = 0; i < m; i++) {
@@ -119,21 +121,5 @@ public class HarmonicKnn implements Variant {
             attr.add(instance.attribute(i));
         }
         return attr;
-    }
-
-    public double euclidDistance(Instance first, Instance second) {
-        if (first.numAttributes() != second.numAttributes()) {
-            throw new RuntimeException("CalculateDistance: Incompatible size of instances");
-        }
-        double sum = 0;
-        for (int i = 0; i < first.numAttributes(); i++) {
-            double value = first.value(i);
-            double value1 = second.value(i);
-            double x = value - value1;
-            if (Double.isNaN(x))
-                continue;
-            sum += Math.pow(x, 2);
-        }
-        return Math.sqrt(sum);
     }
 }

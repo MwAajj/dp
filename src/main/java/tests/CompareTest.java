@@ -5,10 +5,10 @@ import lombok.Getter;
 import classifier.structure.basic.BruteForce;
 import classifier.structure.trees.ballTree.BallTree;
 import classifier.structure.trees.kdtree.KdTree;
-import weka.core.Attribute;
-import weka.core.DenseInstance;
-import weka.core.Instance;
-import weka.core.Instances;
+import weka.classifiers.Classifier;
+import weka.classifiers.lazy.IBk;
+import weka.core.*;
+import weka.core.neighboursearch.KDTree;
 import weka.core.neighboursearch.NearestNeighbourSearch;
 
 import java.io.Serializable;
@@ -35,8 +35,14 @@ public class CompareTest {
     private static DistInst[][] bruteForceInstances = new DistInst[INSTANCES_SIZE_K][NEIGHBOURS_K];
     private static DistInst[][] kdInstances = new DistInst[INSTANCES_SIZE_K][NEIGHBOURS_K];
     private static DistInst[][] ballInstances = new DistInst[INSTANCES_SIZE_K][NEIGHBOURS_K];
-
+    private static Instances[] wekaInstances = new Instances[INSTANCES_SIZE_K];
     private static final double THRESHOLD = 0.000001d;
+
+
+    private static final DistanceFunction M_DISTANCE_FUNCTION = new classifier.EuclideanDistance();
+
+    //private static final DistanceFunction M_DISTANCE_FUNCTION = new EuclideanDistance();
+
 
     public static void main(String[] args) throws Exception {
         for (int i = 0; i < RANDOM_SIZE; i++) {
@@ -50,8 +56,19 @@ public class CompareTest {
             bruteForce();
             kdTree();
             ballTree();
+            wekaKd();
             sort();
             compare();
+        }
+    }
+
+    private static void wekaKd() throws Exception {
+        for (int a = 0; a < INSTANCES_SIZE_K; a++) {
+            Instance instance = baseInstances.get(a);
+            KDTree kdTree = new KDTree();
+            kdTree.setInstances(baseInstances);
+            Instances instances = kdTree.kNearestNeighbours(instance, NEIGHBOURS_K);
+            wekaInstances[a] = instances;
         }
     }
 
@@ -99,12 +116,14 @@ public class CompareTest {
 
     private static void bruteForce() throws Exception {
         BruteForce structure = new BruteForce();
+        structure.setDistanceFunction(M_DISTANCE_FUNCTION);
         structure.buildStructure(baseInstances);
         test(structure, 0);
     }
 
     private static void kdTree() throws Exception {
         KdTree structure = new KdTree(false);
+        structure.setDistanceFunction(M_DISTANCE_FUNCTION);
         structure.buildStructure(baseInstances);
         test(structure, 1);
     }
@@ -112,6 +131,7 @@ public class CompareTest {
 
     private static void ballTree() throws Exception {
         BallTree structure = new BallTree();
+        structure.setDistanceFunction(M_DISTANCE_FUNCTION);
         structure.buildStructure(baseInstances);
         test(structure, 2);
     }

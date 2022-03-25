@@ -64,8 +64,9 @@ public class InstanceManager {
 
         //from 0 to train size are train instances
         train = new Instances(all, 0, trainSize);
-
+        train.setClassIndex(classIndex);
         //from train size to test size are test instances
         test = new Instances(all, trainSize, testSize);
+        test.setClassIndex(classIndex);
     }
 }

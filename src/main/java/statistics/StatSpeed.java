@@ -1,5 +1,6 @@
 package statistics;
 
+import classifier.EuclideanDistance;
 import instance.InstanceManager;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -7,10 +8,7 @@ import classifier.structure.Structure;
 import classifier.structure.basic.BruteForce;
 import classifier.structure.trees.ballTree.BallTree;
 import classifier.structure.trees.kdtree.KdTree;
-import weka.core.Attribute;
-import weka.core.DenseInstance;
-import weka.core.Instance;
-import weka.core.Instances;
+import weka.core.*;
 import weka.core.neighboursearch.NearestNeighbourSearch;
 
 import java.io.FileWriter;
@@ -55,6 +53,9 @@ public class StatSpeed {
 
     private static int instancesSize = 10_000;
     private static final int instancesSizeK = 2_000;
+    private static final DistanceFunction M_DISTANCE_FUNCTION = new EuclideanDistance();
+
+    //private static final DistanceFunction M_DISTANCE_FUNCTION = new EuclideanDistance();
 
     private static final int ABOVE_BORDER = Integer.MAX_VALUE;
     private static final int BOTTOM_BORDER = 0;
@@ -68,6 +69,13 @@ public class StatSpeed {
 
     private static long[][] times = new long[randomSize][timeLength];
     private static long[] results = new long[timeLength];
+
+    private static final int[] neighbours = {
+            3,
+            10,
+            20,
+            50,
+    };
 
     private static final int[][] options = {
             {3, 3},
@@ -95,54 +103,68 @@ public class StatSpeed {
             };
 
     private static String fileName;
+    private static String sourceType;
 
     public static void main(String[] args) throws Exception {
         type = "_neighbour_";
         if (statBuild)
             type = "_build_";
-        if(isRandom)
-            resultFile = new FileWriter("src/main/resources/files/statistics/stat_results" + type + "_random.csv");
-        else
-            resultFile = new FileWriter("src/main/resources/files/statistics/stat_results" + type + "datasets.csv");
-        if (!isRandom) {
-            for (String file : files) {
-                System.out.println("file: " + file);
-                fileName = file;
-                InstanceManager manager = new InstanceManager(fileName, classIndex);
-                baseInstances = manager.getTrain();
-                execute();
-            }
-        } else execute();
+        sourceType = "_random";
+        if (isRandom)
+            sourceType = "_dataset";
+        resultFile = new FileWriter("src/main/resources/files/statistics/stat_results" + type + sourceType + ".csv");
+
+        if (isRandom) {
+            executeOptions();
+            resultFile.close();
+            return;
+        }
+
+        for (String file : files) {
+            System.out.println("file: " + file);
+            fileName = file;
+            InstanceManager manager = new InstanceManager(fileName, classIndex);
+            baseInstances = manager.getTrain();
+            executeFiles();
+        }
         resultFile.close();
     }
+    private static void executeFiles() throws  Exception{
+        attrSize = baseInstances.numAttributes();
+        for (int i = 0; i < neighbours.length; i++) {
+            neighboursK = neighbours[i];
+            execute();
+        }
+    }
 
-    private static void execute() throws Exception {
+    private static void executeOptions() throws Exception {
         for (int[] option : options) {
             times = new long[randomSize][timeLength];
             results = new long[timeLength];
             System.out.println("-------------------------------------------");
             attrSize = option[Variable.attr.ordinal()];
             neighboursK = option[Variable.k.ordinal()];
-            if (!isRandom) {
-                attrSize = baseInstances.firstInstance().numAttributes();
-            }
-            for (int i = 0; i < randomSize; i++) {
-                System.out.println(i);
-                rand = new Random(i);
-                if (isRandom) {
-                    if(statBuild)
-                        instancesSize = neighboursK;
-                    baseInstances = new Instances("Test", getAttr(), attrSize);
-                    setInstances();
-                }
-                bruteForce(i);
-                kdTree(i);
-                ballTree(i);
-                ballTreeWeka(i);
-                kdTreeWeka(i);
-            }
-            saveTimeValues();
+            execute();
         }
+    }
+
+    private static void execute() throws Exception {
+        for (int i = 0; i < randomSize; i++) {
+            System.out.println(i);
+            rand = new Random(i);
+            if (isRandom) {
+                if (statBuild)
+                    instancesSize = neighboursK;
+                baseInstances = new Instances("Test", getAttr(), attrSize);
+                setInstances();
+            }
+            bruteForce(i);
+            kdTree(i);
+            ballTree(i);
+            ballTreeWeka(i);
+            kdTreeWeka(i);
+        }
+        saveTimeValues();
     }
 
     private static void kdTreeWeka(int i) throws Exception {
@@ -171,6 +193,7 @@ public class StatSpeed {
 
     private static void bruteForce(int i) throws Exception {
         BruteForce structure = new BruteForce();
+        structure.setDistanceFunction(M_DISTANCE_FUNCTION);
         long l;
         if (statBuild)
             l = measureBuild(structure);
@@ -183,6 +206,7 @@ public class StatSpeed {
 
     private static void kdTree(int i) throws Exception {
         KdTree structure = new KdTree(true);
+        structure.setDistanceFunction(M_DISTANCE_FUNCTION);
         long l;
         if (statBuild)
             l = measureBuild(structure);
@@ -196,6 +220,7 @@ public class StatSpeed {
 
     private static void ballTree(int i) throws Exception {
         BallTree structure = new BallTree();
+        structure.setDistanceFunction(M_DISTANCE_FUNCTION);
         long l;
         if (statBuild)
             l = measureBuild(structure);
@@ -261,6 +286,7 @@ public class StatSpeed {
         public int compareTo(DistInst o) {
             return Double.compare(o.getDistance(), this.distance);
         }
+
     }
 
 
@@ -268,11 +294,7 @@ public class StatSpeed {
         FileWriter writer;
         long[][] sum = new long[randomSize][timeLength];
         try {
-
-            if (isRandom)
-                writer = new FileWriter("src/main/resources/files/statistics/stat" + type + attrSize + "A___" + neighboursK + "K.csv");
-            else
-                writer = new FileWriter("src/main/resources/files/statistics/stat_" + type + fileName + "_" + attrSize + "A___" + neighboursK + "_.csv");
+            writer = new FileWriter("src/main/resources/files/statistics/stat" + type + sourceType + attrSize + "A___" + neighboursK + "K.csv");
             for (int i = 0; i < randomSize; i++) {
                 for (int j = 0; j < times[i].length; j++) {
                     if (i == 0) sum[i][j] += times[i][j];
@@ -290,7 +312,7 @@ public class StatSpeed {
             writer.close();
 
             for (int i = 0; i < results.length; i++) {
-                results[i] = times[randomSize -1][i];
+                results[i] = times[randomSize - 1][i];
                 resultFile.append(String.valueOf(results[i]));
                 resultFile.append(";");
             }

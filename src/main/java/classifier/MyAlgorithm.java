@@ -15,6 +15,7 @@ import classifier.structure.trees.kdtree.KdTree;
 import weka.classifiers.AbstractClassifier;
 import weka.classifiers.Classifier;
 import weka.core.*;
+import weka.core.EuclideanDistance;
 
 import java.util.*;
 
@@ -29,6 +30,11 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
     private Structure structure;
     private DistanceFunction mDistanceFunction;
 
+    public MyAlgorithm(int k, Instances data) {
+        this.k = k;
+        buildClassifier(data);
+    }
+
     public MyAlgorithm(int k) {
         this.k = k;
     }
@@ -39,6 +45,8 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
         mNumberClasses = data.numDistinctValues(data.classIndex());
         if (mDistanceFunction == null) mDistanceFunction = new EuclideanDistance();
         if (structure == null) structure = new BallTree(k);
+        if (variant == null) variant = new Knn(structure, k);
+        mDistanceFunction.setInstances(data);
         structure.setDistanceFunction(mDistanceFunction);
         structure.buildStructure(data);
     }
@@ -46,12 +54,16 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
     //return end class of new instance
     @Override
     public double classifyInstance(Instance instance) {
+        if (variant instanceof HarmonicKnn)
+            ((HarmonicKnn) variant).setMDistanceFunction(mDistanceFunction);
         return variant.classifyInstance(instance, mNumberClasses);
     }
 
     //return probabilities for each class of new instance
     @Override
     public double[] distributionForInstance(Instance instance) {
+        if (variant instanceof HarmonicKnn)
+            ((HarmonicKnn) variant).setMDistanceFunction(mDistanceFunction);
         return variant.distributionForInstance(instance, mNumberClasses);
     }
 
@@ -94,6 +106,8 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
         options.add("-K");
         options.add("" + getK());
         options.add(variant.getOption());
+        options.add(structure.getOption());
+        if(mkVariance) options.add("-V");
         return options.toArray(new String[0]);
     }
 
