@@ -18,6 +18,7 @@ public interface Structure {
     Instances findKNearestNeighbours(Instance instance, int k);
     ArrayList<Attribute> getALlAttributes(Instance instance);
     double[] getDistances();
+    String getOption();
 
     @AllArgsConstructor
     @Getter

@@ -18,10 +18,14 @@ public class HarmonicKnn implements Variant {
     Map<Double, Double> info = new HashMap<>();
     private int m;
     private int k;
+    private int r;
+    private DistanceFunction mDistanceFunction;
+    private boolean isLocalMeanSet;
 
-    public HarmonicKnn(Structure structure, int k) {
+    public HarmonicKnn(Structure structure, int k, int r) {
         this.structure = structure;
         this.k = k;
+        this.r = r;
     }
 
     @Override
@@ -47,18 +51,31 @@ public class HarmonicKnn implements Variant {
     }
 
     @Override
+    public void setOption(String option) {
+        if (Objects.equals(option, "L"))
+            isLocalMeanSet = true;
+    }
+
+    @Override
     public String getOption() {
         return "-H";
     }
 
     private double[] hmdKnnAlg(Instance target, int mNumberClasses) {
+        if(r > k || r < 0)
+            new RuntimeException("Invalid parameter r " + r );
         this.m = mNumberClasses;
         this.neighbours = structure.findKNearestNeighbours(target, k);
         this.distances = structure.getDistances();
+        mDistanceFunction.setInstances(this.neighbours);
         sortInstances(neighbours, distances); //1
         Instances meanInstances = getMeanInstances(neighbours); //2
         double[] harmonicMeanDistances = getHarmonicMeanDistances(target, meanInstances);
-        return getResult(harmonicMeanDistances);
+        if (!isLocalMeanSet) {
+            return getResult(harmonicMeanDistances);
+        } else {
+            return harmonicMeanDistances;
+        }
     }
 
     public void sortInstances(Instances neighbours, double[] distances) {
@@ -72,7 +89,7 @@ public class HarmonicKnn implements Variant {
             sum[i] += 1 / harmonicMeanDistances[i];
         }
         for (int i = 0; i < m; i++) {
-            sum[i] = harmonicMeanDistances.length / (sum[i] + 0.00001d);
+            sum[i] = k / (sum[i] + 0.00001d);
         }
         return sum;
     }
@@ -81,11 +98,11 @@ public class HarmonicKnn implements Variant {
         double[] harmonicMeanDistances = new double[m];
         double[] denominator = new double[m];
         for (int i = 0; i < m; i++) {
-            double distance = euclidDistance(target, meanVectors.get(i));
+            double distance = mDistanceFunction.distance(target, meanVectors.get(i));
             denominator[i] += distance;
         }
         for (int i = 0; i < m; i++) {
-            harmonicMeanDistances[i] = m / denominator[i];
+            harmonicMeanDistances[i] = r / denominator[i];
         }
         return harmonicMeanDistances;
     }
@@ -119,21 +136,5 @@ public class HarmonicKnn implements Variant {
             attr.add(instance.attribute(i));
         }
         return attr;
-    }
-
-    public double euclidDistance(Instance first, Instance second) {
-        if (first.numAttributes() != second.numAttributes()) {
-            throw new RuntimeException("CalculateDistance: Incompatible size of instances");
-        }
-        double sum = 0;
-        for (int i = 0; i < first.numAttributes(); i++) {
-            double value = first.value(i);
-            double value1 = second.value(i);
-            double x = value - value1;
-            if (Double.isNaN(x))
-                continue;
-            sum += Math.pow(x, 2);
-        }
-        return Math.sqrt(sum);
     }
 }

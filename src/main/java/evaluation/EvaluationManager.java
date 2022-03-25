@@ -74,4 +74,8 @@ public class EvaluationManager {
             System.out.println(infoName[i] + infoData[i]);
         }
     }
+
+    public void infoPrintSoft() {
+        System.out.println("\t\tEstimated Accuracy: " + infoData[Information.ESTIMATED_ACCURACY.ordinal()]);
+    }
 }

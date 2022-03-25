@@ -65,4 +65,8 @@ public class WeightedKnn implements Variant {
         return "-W";
     }
 
+    @Override
+    public void setOption(String option) {
+        // No option for this variant is implemented
+    }
 }

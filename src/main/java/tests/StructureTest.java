@@ -1,13 +1,11 @@
 package tests;
 
+import classifier.EuclideanDistance;
 import classifier.structure.Structure;
 import classifier.structure.basic.BruteForce;
 import classifier.structure.trees.ballTree.BallTree;
 import classifier.structure.trees.kdtree.KdTree;
-import weka.core.Attribute;
-import weka.core.DenseInstance;
-import weka.core.Instance;
-import weka.core.Instances;
+import weka.core.*;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -35,6 +33,11 @@ public class StructureTest {
     private static Instances instanceArrayList;
     private static Instances baseInstances;
 
+    private static final DistanceFunction M_DISTANCE_FUNCTION = new EuclideanDistance();
+
+    //private static final DistanceFunction M_DISTANCE_FUNCTION = new EuclideanDistance();
+
+
     public static void main(String[] args) {
         for (int i = 0; i < RANDOM_SIZE; i++) {
             instanceArrayList = new Instances("Test", getAttr(), 2);
@@ -50,21 +53,24 @@ public class StructureTest {
 
     private static void bruteForce() {
         Structure structure = new BruteForce();
+        structure.setDistanceFunction(M_DISTANCE_FUNCTION);
         structure.buildStructure(baseInstances);
         testNeighbours(structure);
     }
 
     private static void kdTree() {
-        KdTree kdTree = new KdTree(false);
-        kdTree.buildStructure(baseInstances);
-        testNeighbours(kdTree);
+        KdTree structure = new KdTree(false);
+        structure.setDistanceFunction(M_DISTANCE_FUNCTION);
+        structure.buildStructure(baseInstances);
+        testNeighbours(structure);
     }
 
 
     private static void ballTree() {
-        BallTree ballTree = new BallTree();
-        ballTree.buildStructure(baseInstances);
-        testNeighbours(ballTree);
+        BallTree structure = new BallTree();
+        structure.setDistanceFunction(M_DISTANCE_FUNCTION);
+        structure.buildStructure(baseInstances);
+        testNeighbours(structure);
     }
 
     private static void testNeighbours(Structure structure) {

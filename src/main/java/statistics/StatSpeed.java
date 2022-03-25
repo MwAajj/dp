@@ -1,5 +1,6 @@
 package statistics;
 
+import classifier.EuclideanDistance;
 import instance.InstanceManager;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -7,10 +8,7 @@ import classifier.structure.Structure;
 import classifier.structure.basic.BruteForce;
 import classifier.structure.trees.ballTree.BallTree;
 import classifier.structure.trees.kdtree.KdTree;
-import weka.core.Attribute;
-import weka.core.DenseInstance;
-import weka.core.Instance;
-import weka.core.Instances;
+import weka.core.*;
 import weka.core.neighboursearch.NearestNeighbourSearch;
 
 import java.io.FileWriter;
@@ -20,16 +18,16 @@ import java.util.Random;
 
 public class StatSpeed {
     enum Variable {
-        attr,
-        k
+        ATTR,
+        K
     }
 
     enum Time {
-        bruteForce,
-        kdTree,
-        ballTree,
-        wekaBallTree,
-        wekaKdTree
+        BRUTE_FORCE,
+        KD_TREE,
+        BALL_TREE,
+        WEKA_BALL_TREE,
+        WEKA_KD_TREE
     }
 
     private static final String[] text = {
@@ -41,20 +39,23 @@ public class StatSpeed {
     };
 
 
-    private static final int timeLength = 5;
+    private static final int TIME_LENGTH = 5;
     private static Random rand;
 
 
-    private static final int randomSize = 10;
+    private static final int RANDOM_SIZE = 10;
 
-    private static final boolean statBuild = false;
-    private static final boolean isRandom = false;
+    private static final boolean STAT_BUILD = false;
+    private static final boolean IS_RANDOM = false;
 
 
-    private static final int classIndex = 0;
+    private static final int CLASS_INDEX = 0;
 
     private static int instancesSize = 10_000;
-    private static final int instancesSizeK = 2_000;
+    private static final int INSTANCES_SIZE_K = 2_000;
+    private static final DistanceFunction M_DISTANCE_FUNCTION = new EuclideanDistance();
+
+    //private static final DistanceFunction M_DISTANCE_FUNCTION = new EuclideanDistance();
 
     private static final int ABOVE_BORDER = Integer.MAX_VALUE;
     private static final int BOTTOM_BORDER = 0;
@@ -66,8 +67,15 @@ public class StatSpeed {
     private static String type;
     private static Instances baseInstances;
 
-    private static long[][] times = new long[randomSize][timeLength];
-    private static long[] results = new long[timeLength];
+    private static long[][] times = new long[RANDOM_SIZE][TIME_LENGTH];
+    private static long[] results = new long[TIME_LENGTH];
+
+    private static final int[] neighbours = {
+            3,
+            10,
+            20,
+            50,
+    };
 
     private static final int[][] options = {
             {3, 3},
@@ -95,115 +103,132 @@ public class StatSpeed {
             };
 
     private static String fileName;
+    private static String sourceType;
 
     public static void main(String[] args) throws Exception {
         type = "_neighbour_";
-        if (statBuild)
+        if (STAT_BUILD)
             type = "_build_";
-        if(isRandom)
-            resultFile = new FileWriter("src/main/resources/files/statistics/stat_results" + type + "_random.csv");
-        else
-            resultFile = new FileWriter("src/main/resources/files/statistics/stat_results" + type + "datasets.csv");
-        if (!isRandom) {
-            for (String file : files) {
-                System.out.println("file: " + file);
-                fileName = file;
-                InstanceManager manager = new InstanceManager(fileName, classIndex);
-                baseInstances = manager.getTrain();
-                execute();
-            }
-        } else execute();
+        sourceType = "_random";
+        if (IS_RANDOM)
+            sourceType = "_dataset";
+        resultFile = new FileWriter("src/main/resources/files/statistics/stat_results" + type + sourceType + ".csv");
+
+        if (IS_RANDOM) {
+            executeOptions();
+            resultFile.close();
+            return;
+        }
+
+        for (String file : files) {
+            System.out.println("file: " + file);
+            fileName = file;
+            InstanceManager manager = new InstanceManager(fileName, CLASS_INDEX);
+            baseInstances = manager.getTrain();
+            executeFiles();
+        }
         resultFile.close();
+    }
+    private static void executeFiles() throws  Exception{
+        attrSize = baseInstances.numAttributes();
+        for (int i = 0; i < neighbours.length; i++) {
+            neighboursK = neighbours[i];
+            execute();
+        }
+    }
+
+    private static void executeOptions() throws Exception {
+        for (int[] option : options) {
+            times = new long[RANDOM_SIZE][TIME_LENGTH];
+            results = new long[TIME_LENGTH];
+            System.out.println("-------------------------------------------");
+            attrSize = option[Variable.ATTR.ordinal()];
+            neighboursK = option[Variable.K.ordinal()];
+            execute();
+        }
     }
 
     private static void execute() throws Exception {
-        for (int[] option : options) {
-            times = new long[randomSize][timeLength];
-            results = new long[timeLength];
-            System.out.println("-------------------------------------------");
-            attrSize = option[Variable.attr.ordinal()];
-            neighboursK = option[Variable.k.ordinal()];
-            if (!isRandom) {
-                attrSize = baseInstances.firstInstance().numAttributes();
+        for (int i = 0; i < RANDOM_SIZE; i++) {
+            System.out.println(i);
+            rand = new Random(i);
+            if (IS_RANDOM) {
+                if (STAT_BUILD)
+                    instancesSize = neighboursK;
+                baseInstances = new Instances("Test", getAttr(), attrSize);
+                setInstances();
             }
-            for (int i = 0; i < randomSize; i++) {
-                System.out.println(i);
-                rand = new Random(i);
-                if (isRandom) {
-                    if(statBuild)
-                        instancesSize = neighboursK;
-                    baseInstances = new Instances("Test", getAttr(), attrSize);
-                    setInstances();
-                }
-                bruteForce(i);
-                kdTree(i);
-                ballTree(i);
-                ballTreeWeka(i);
-                kdTreeWeka(i);
-            }
-            saveTimeValues();
+            bruteForce(i);
+            kdTree(i);
+            ballTree(i);
+            ballTreeWeka(i);
+            kdTreeWeka(i);
         }
+        saveTimeValues();
     }
 
     private static void kdTreeWeka(int i) throws Exception {
         weka.core.neighboursearch.KDTree structure = new weka.core.neighboursearch.KDTree();
         long l;
-        if (statBuild)
+        if (STAT_BUILD)
             l = measureBuildWeka(structure);
         else {
             structure.setInstances(baseInstances);
             l = measureNeighbours(structure);
         }
-        times[i][Time.wekaKdTree.ordinal()] = l;
+        times[i][Time.WEKA_KD_TREE.ordinal()] = l;
     }
 
     private static void ballTreeWeka(int i) throws Exception {
         weka.core.neighboursearch.BallTree structure = new weka.core.neighboursearch.BallTree();
         long l;
-        if (statBuild) {
+        if (STAT_BUILD) {
             l = measureBuildWeka(structure);
         } else {
             structure.setInstances(baseInstances);
             l = measureNeighbours(structure);
         }
-        times[i][Time.wekaBallTree.ordinal()] = l;
+        times[i][Time.WEKA_BALL_TREE.ordinal()] = l;
     }
 
     private static void bruteForce(int i) throws Exception {
         BruteForce structure = new BruteForce();
+        structure.setDistanceFunction(M_DISTANCE_FUNCTION);
         long l;
-        if (statBuild)
+        if (STAT_BUILD)
             l = measureBuild(structure);
         else {
             structure.buildStructure(baseInstances);
             l = measureNeighbours(structure);
         }
-        times[i][Time.bruteForce.ordinal()] = l;
+        times[i][Time.BRUTE_FORCE.ordinal()] = l;
     }
 
     private static void kdTree(int i) throws Exception {
         KdTree structure = new KdTree(true);
+        structure.setDistanceFunction(M_DISTANCE_FUNCTION);
         long l;
-        if (statBuild)
+        if (STAT_BUILD)
             l = measureBuild(structure);
         else {
             structure.buildStructure(baseInstances);
             l = measureNeighbours(structure);
         }
-        times[i][Time.kdTree.ordinal()] = l;
+        times[i][Time.KD_TREE.ordinal()] = l;
     }
 
 
     private static void ballTree(int i) throws Exception {
         BallTree structure = new BallTree();
+        structure.setDistanceFunction(M_DISTANCE_FUNCTION);
         long l;
-        if (statBuild)
+        if (STAT_BUILD)
             l = measureBuild(structure);
         else {
             structure.buildStructure(baseInstances);
             l = measureNeighbours(structure);
         }
-        times[i][Time.ballTree.ordinal()] = l;
+        times[i][Time.BALL_TREE.ordinal()] = l;
     }
 
     private static long measureBuildWeka(NearestNeighbourSearch structure) throws Exception {
@@ -222,7 +247,7 @@ public class StatSpeed {
 
     private static long measureNeighbours(NearestNeighbourSearch structure) throws Exception {
         long start = System.currentTimeMillis();
-        for (int a = 0; a < instancesSizeK; a++) {
+        for (int a = 0; a < INSTANCES_SIZE_K; a++) {
             Instance instance = baseInstances.get(rand.nextInt(baseInstances.size()));
             structure.kNearestNeighbours(instance, neighboursK);
         }
@@ -239,7 +264,7 @@ public class StatSpeed {
             }
             baseInstances.add(new DenseInstance(1d, values));
         }
-        baseInstances.setClassIndex(classIndex);
+        baseInstances.setClassIndex(CLASS_INDEX);
     }
 
     private static ArrayList<Attribute> getAttr() {
@@ -261,19 +286,16 @@ public class StatSpeed {
         public int compareTo(DistInst o) {
             return Double.compare(o.getDistance(), this.distance);
         }
+
     }
 
 
     private static void saveTimeValues() {
         FileWriter writer;
-        long[][] sum = new long[randomSize][timeLength];
+        long[][] sum = new long[RANDOM_SIZE][TIME_LENGTH];
         try {
-
-            if (isRandom)
-                writer = new FileWriter("src/main/resources/files/statistics/stat" + type + attrSize + "A___" + neighboursK + "K.csv");
-            else
-                writer = new FileWriter("src/main/resources/files/statistics/stat_" + type + fileName + "_" + attrSize + "A___" + neighboursK + "_.csv");
-            for (int i = 0; i < randomSize; i++) {
+            writer = new FileWriter("src/main/resources/files/statistics/stat" + type + sourceType + attrSize + "A___" + neighboursK + "K.csv");
+            for (int i = 0; i < RANDOM_SIZE; i++) {
                 for (int j = 0; j < times[i].length; j++) {
                     if (i == 0) sum[i][j] += times[i][j];
                     else sum[i][j] = sum[i - 1][j] + times[i][j];
@@ -290,7 +312,7 @@ public class StatSpeed {
             writer.close();
 
             for (int i = 0; i < results.length; i++) {
-                results[i] = times[randomSize -1][i];
+                results[i] = times[RANDOM_SIZE - 1][i];
                 resultFile.append(String.valueOf(results[i]));
                 resultFile.append(";");
             }
@@ -298,8 +320,8 @@ public class StatSpeed {
         } catch (Exception e) {
             System.out.println("Exception " + e);
         }
-        for (int i = 0; i < timeLength; i++) {
-            System.out.println(text[i] + sum[randomSize - 1][i]);
+        for (int i = 0; i < TIME_LENGTH; i++) {
+            System.out.println(text[i] + sum[RANDOM_SIZE - 1][i]);
         }
     }
 }
