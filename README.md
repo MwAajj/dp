@@ -5,3 +5,4 @@ Hi guys,
   For my project I used library WEKA.
   I implemented KNN algoritmus and add new variants such as HMDKNN, FKNN, LMKNN, and advanced structures such as Ball Tree and Kd Tree.
  
+For more information please check the pdf. I am sorry but it is in my native language slovakia.
