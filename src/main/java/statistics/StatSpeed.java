@@ -77,6 +77,13 @@ public class StatSpeed {
             50,
     };
 
+    private static final int[] neighbours = {
+            3,
+            10,
+            20,
+            50,
+    };
+
     private static final int[][] options = {
             {3, 3},
             {5, 5},
@@ -110,6 +117,7 @@ public class StatSpeed {
         if (STAT_BUILD)
             type = "_build_";
         sourceType = "_random";
+
         if (IS_RANDOM)
             sourceType = "_dataset";
         resultFile = new FileWriter("src/main/resources/files/statistics/stat_results" + type + sourceType + ".csv");
@@ -313,6 +321,7 @@ public class StatSpeed {
 
             for (int i = 0; i < results.length; i++) {
                 results[i] = times[RANDOM_SIZE - 1][i];
+
                 resultFile.append(String.valueOf(results[i]));
                 resultFile.append(";");
             }

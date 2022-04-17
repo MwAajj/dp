@@ -30,6 +30,7 @@ public class StatsPrecision {
             {"high risk", "low risk", "mid risk"}
     };
 
+
     private static DistanceFunction[] distanceFunctions = new DistanceFunction[]{
             new classifier.EuclideanDistance(),
             //new EuclideanDistance(),

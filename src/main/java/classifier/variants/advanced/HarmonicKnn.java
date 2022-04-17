@@ -22,6 +22,7 @@ public class HarmonicKnn implements Variant {
     private DistanceFunction mDistanceFunction;
     private boolean isLocalMeanSet;
 
+
     public HarmonicKnn(Structure structure, int k, int r) {
         this.structure = structure;
         this.k = k;

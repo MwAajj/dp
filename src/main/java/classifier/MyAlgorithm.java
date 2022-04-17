@@ -111,7 +111,7 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
         options.add("" + getK());
         options.add(variant.getOption());
         options.add(structure.getOption());
-        if (mkVariance) options.add("-V");
+        if (mkVariance) options.add("-V");        
         return options.toArray(new String[0]);
     }
 
