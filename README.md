@@ -1,4 +1,4 @@
-# dp
+# Application of classification algorithms to medical data
 Hi guys,
   this is my school project for my diploma thesis.
   Name of diploma thesis is Application of classification algorithms to medical data. 
