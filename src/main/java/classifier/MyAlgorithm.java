@@ -76,7 +76,8 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
     public void setOptions(String[] options) throws Exception {
         String knnString = Utils.getOption('K', options);
         String fuzzyString = Utils.getOption('F', options);
-
+        String hmdString = Utils.getOption('H', options);
+        String lmString = Utils.getOption('L', options);
         if (knnString.length() != 0) {
             setK(Integer.parseInt(knnString));
         }
@@ -88,12 +89,15 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
             structure = new KdTree(mkVariance);
         else
             structure = new BruteForce();
-        if (Utils.getFlag('H', options)) {
-            variant = new HarmonicKnn(structure, k);
+        if (hmdString.length() != 0) {
+            variant = new HarmonicKnn(structure, k, Integer.parseInt(hmdString));
         } else if (fuzzyString.length() != 0) {
             variant = new FuzzyKnn(structure, k, Integer.parseInt(fuzzyString));
         } else if (Utils.getFlag('W', options)) {
             variant = new WeightedKnn(structure, k);
+        } else if (lmString.length() != 0) {
+            variant = new HarmonicKnn(structure, k, Integer.parseInt(lmString));
+            variant.setOption("L");
         } else {
             variant = new Knn(structure, k);
         }
@@ -107,7 +111,7 @@ public class MyAlgorithm extends AbstractClassifier implements Classifier, Optio
         options.add("" + getK());
         options.add(variant.getOption());
         options.add(structure.getOption());
-        if(mkVariance) options.add("-V");
+        if (mkVariance) options.add("-V");        
         return options.toArray(new String[0]);
     }
 

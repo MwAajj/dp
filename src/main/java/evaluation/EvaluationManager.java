@@ -6,7 +6,6 @@ import weka.classifiers.Evaluation;
 import weka.classifiers.evaluation.ConfusionMatrix;
 import weka.core.Instances;
 
-import java.io.FileWriter;
 import java.util.Random;
 
 @Getter

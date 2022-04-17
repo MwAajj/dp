@@ -18,11 +18,15 @@ public class HarmonicKnn implements Variant {
     Map<Double, Double> info = new HashMap<>();
     private int m;
     private int k;
+    private int r;
     private DistanceFunction mDistanceFunction;
+    private boolean isLocalMeanSet;
 
-    public HarmonicKnn(Structure structure, int k) {
+
+    public HarmonicKnn(Structure structure, int k, int r) {
         this.structure = structure;
         this.k = k;
+        this.r = r;
     }
 
     @Override
@@ -48,11 +52,19 @@ public class HarmonicKnn implements Variant {
     }
 
     @Override
+    public void setOption(String option) {
+        if (Objects.equals(option, "L"))
+            isLocalMeanSet = true;
+    }
+
+    @Override
     public String getOption() {
         return "-H";
     }
 
     private double[] hmdKnnAlg(Instance target, int mNumberClasses) {
+        if(r > k || r < 0)
+            new RuntimeException("Invalid parameter r " + r );
         this.m = mNumberClasses;
         this.neighbours = structure.findKNearestNeighbours(target, k);
         this.distances = structure.getDistances();
@@ -60,7 +72,11 @@ public class HarmonicKnn implements Variant {
         sortInstances(neighbours, distances); //1
         Instances meanInstances = getMeanInstances(neighbours); //2
         double[] harmonicMeanDistances = getHarmonicMeanDistances(target, meanInstances);
-        return getResult(harmonicMeanDistances);
+        if (!isLocalMeanSet) {
+            return getResult(harmonicMeanDistances);
+        } else {
+            return harmonicMeanDistances;
+        }
     }
 
     public void sortInstances(Instances neighbours, double[] distances) {
@@ -74,7 +90,7 @@ public class HarmonicKnn implements Variant {
             sum[i] += 1 / harmonicMeanDistances[i];
         }
         for (int i = 0; i < m; i++) {
-            sum[i] = harmonicMeanDistances.length / (sum[i] + 0.00001d);
+            sum[i] = k / (sum[i] + 0.00001d);
         }
         return sum;
     }
@@ -87,7 +103,7 @@ public class HarmonicKnn implements Variant {
             denominator[i] += distance;
         }
         for (int i = 0; i < m; i++) {
-            harmonicMeanDistances[i] = m / denominator[i];
+            harmonicMeanDistances[i] = r / denominator[i];
         }
         return harmonicMeanDistances;
     }

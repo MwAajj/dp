@@ -11,6 +11,7 @@ public interface Variant extends Serializable {
     double[] distributionForInstance(Instance instance, int mNumberClasses);
     double classifyInstance(Instance instance, int mNumberClasses);
     String getOption();
+    void setOption(String option);
     void sortInstances(Instances instances,  double[] distances);
 
     @AllArgsConstructor

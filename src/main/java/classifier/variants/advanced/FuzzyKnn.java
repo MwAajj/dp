@@ -100,4 +100,9 @@ public class FuzzyKnn implements Variant {
         }
         return numeratorSum / (denominatorSum + 0.00001d);
     }
+
+    @Override
+    public void setOption(String option) {
+        // No option for this variant is implemented
+    }
 }

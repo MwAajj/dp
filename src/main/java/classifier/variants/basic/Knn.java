@@ -10,7 +10,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Knn implements Variant {
+public class Knn implements Variant  {
     private final Structure structure;
     private final int k;
 
@@ -73,6 +73,11 @@ public class Knn implements Variant {
     @Override
     public String getOption() {
         return "";
+    }
+
+    @Override
+    public void setOption(String option) {
+        // No option for this variant is implemented
     }
 
     private Map<Double, Integer> getOccurrences(Instances instances) {
