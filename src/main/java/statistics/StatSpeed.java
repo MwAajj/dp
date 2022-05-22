@@ -77,13 +77,6 @@ public class StatSpeed {
             50,
     };
 
-    private static final int[] neighbours = {
-            3,
-            10,
-            20,
-            50,
-    };
-
     private static final int[][] options = {
             {3, 3},
             {5, 5},
